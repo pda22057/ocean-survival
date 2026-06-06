@@ -341,7 +341,9 @@
       clearInterval(hydrationDrainInterval);
       clearInterval(healthDrainInterval);
       clearInterval(clockInterval);
-      
+
+      / 📻 STOP THE BACKGROUND AMBIENT AUDIO TRACK
+      document.getElementById('rig').components.sound.stopSound();
       // Deactivate spawning modules
       document.getElementById('scene').setAttribute('ring-spawner', 'enabled: false');
 
