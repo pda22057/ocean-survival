@@ -338,12 +338,13 @@
 
     // SYSTEM GAME OVER TRIGGER (Modified to display full black screen overlay layout on 0%)
     function triggerGameOver() {
+      // 🛑 ADD THIS LINE RIGHT HERE TO STOP THE MP3 AUDIO:
+      document.getElementById('rig').components.sound.stopSound();
       clearInterval(hydrationDrainInterval);
       clearInterval(healthDrainInterval);
       clearInterval(clockInterval);
 
-      / 📻 STOP THE BACKGROUND AMBIENT AUDIO TRACK
-      document.getElementById('rig').components.sound.stopSound();
+
       // Deactivate spawning modules
       document.getElementById('scene').setAttribute('ring-spawner', 'enabled: false');
 
