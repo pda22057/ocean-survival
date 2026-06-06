@@ -444,14 +444,14 @@
         bottleEntity.setAttribute('gltf-model', '#bottle-model');
         
         // 📐 SCALE ADJUSTMENT: Boosts the size significantly so it's clear on the horizon
-        bottleEntity.setAttribute('scale', '5 5 5');
+        bottleEntity.setAttribute('scale', '150 150 150');
 
         // 🌊 WAVE FLOAT ADJUSTMENT: Sets eyeHeight slightly higher (0.15) so it floats safely on the crests
         bottleEntity.setAttribute('wave-rider', {
           amplitude: 0.03,
           speed: 1.0,
-          eyeHeight: 0.15,
-          maxCeiling: 0.3
+          eyeHeight: 2.5,
+          maxCeiling: 5.0
         });
 
         this.el.appendChild(bottleEntity);
