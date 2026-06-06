@@ -443,15 +443,15 @@
         bottleEntity.setAttribute('position', `${spawnX} 0 ${spawnZ}`);
         bottleEntity.setAttribute('gltf-model', '#bottle-model');
         
-        // Match the environment's scale (adjust values below if your model is too huge or small)
-        bottleEntity.setAttribute('scale', '1 1 1');
+        // 📐 SCALE ADJUSTMENT: Boosts the size significantly so it's clear on the horizon
+        bottleEntity.setAttribute('scale', '5 5 5');
 
-        // Apply your smooth floating component logic so the bottle rolls on the sea swells nicely
+        // 🌊 WAVE FLOAT ADJUSTMENT: Sets eyeHeight slightly higher (0.15) so it floats safely on the crests
         bottleEntity.setAttribute('wave-rider', {
-          amplitude: 0.02,
+          amplitude: 0.03,
           speed: 1.0,
-          eyeHeight: 0.05,
-          maxCeiling: 0.1
+          eyeHeight: 0.15,
+          maxCeiling: 0.3
         });
 
         this.el.appendChild(bottleEntity);
