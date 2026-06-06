@@ -21,8 +21,8 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      background: rgba(1, 22, 43, 0.4); 
-      backdrop-filter: blur(3px);       
+      background: rgba(1, 22, 43, 0.5); 
+      backdrop-filter: blur(4px);       
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       transition: opacity 0.5s ease-out;
     }
@@ -33,7 +33,7 @@
       letter-spacing: 4px;
       margin-bottom: 30px;
       text-transform: uppercase;
-      text-shadow: 0px 4px 10px rgba(0, 0, 0, 0.7);
+      text-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
     }
 
     #audio-button {
@@ -55,6 +55,118 @@
       background: #29547d;
       transform: scale(1.05);
     }
+
+    /* ⏱️ UPDATED SURVIVAL HUD CLOCK STYLE: Right-aligned and low opacity */
+    #survival-hud {
+      position: fixed;
+      top: 25px;
+      right: 30px; /* 📍 Pinned to the top-right part of the screen */
+      z-index: 999;
+      display: none; 
+      background: rgba(0, 10, 20, 0.35); /* 🌫️ Lowered opacity from 0.75 to 0.35 */
+      padding: 12px 25px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1); /* 🌫️ Softened border edge opacity */
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      font-family: 'Courier New', Courier, monospace;
+      color: #64dfdf;
+      font-size: 20px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      text-align: center;
+    }
+
+    /* 💧 HYDRATION BAR CONTAINER HUD STYLE */
+    #hydration-bar-container {
+      position: fixed;
+      top: 25px;
+      left: 30px; /* 📍 Pinned neatly to the left side of the screen */
+      z-index: 999;
+      display: none; /* Hidden until game starts */
+      width: 240px;
+      height: 14px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 4px solid #2a2833; /* Thick structural border frame */
+      border-radius: 20px; /* Rounded corners for tube effect */
+      padding: 2px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+    }
+
+    /* Dynamic internal fluid core of the Hydration Bar */
+    #hydration-bar-fluid {
+      width: 100%; /* Starts fully loaded */
+      height: 100%;
+      background-color: #2e3085; /* Starting full color: Solid blue */
+      border-radius: 20px;
+      transition: width 0.3s ease, background-color 0.5s ease; /* Smooth shifts */
+    }
+
+    /* ❤️ NEW HEALTH BAR CONTAINER HUD STYLE */
+    #health-bar-container {
+      position: fixed;
+      top: 65px; /* 📍 Stacked cleanly below the hydration bar */
+      left: 30px;
+      z-index: 999;
+      display: none; /* Hidden until game starts */
+      width: 240px;
+      height: 14px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 4px solid #2a2833; /* Matching thick structural border frame */
+      border-radius: 20px;
+      padding: 2px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+    }
+
+    /* Dynamic internal fluid core of the Health Bar */
+    #health-bar-fluid {
+      width: 100%; /* Starts fully loaded */
+      height: 100%;
+      background-color: #2E8562; /* Starting full color: Custom Green */
+      border-radius: 20px;
+      transition: width 0.3s ease, background-color 0.5s ease;
+    }
+
+    /* 🖤 FULL BLACK GAME OVER OVERLAY SCREEN */
+    #game-over-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #000000;
+      z-index: 10000; /* Layers directly over everything else when active */
+      display: none; 
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* ⚪ UPDATED GAME OVER TEXT STYLE: White, Up-Centered alignment, and dynamic Fade-In animation */
+    #game-over-text {
+      color: #ffffff;
+      font-size: 64px;
+      font-weight: bold;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      text-shadow: 0px 4px 15px rgba(255, 255, 255, 0.2);
+      margin-bottom: 15vh; /* 📍 Pushes the text up toward the upper-center of the viewport */
+    }
+
+    /* Triggers the fade effect when the screen transitions to block/flex */
+    #game-over-screen[style*="display: flex"] #game-over-text {
+      animation: textFadeIn 1.5s ease-out forwards;
+    }
+
+    @keyframes textFadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
   </style>
 </head>
 <body>
@@ -62,6 +174,20 @@
   <div id="main-menu">
     <h1 id="menu-title">Lost At Sea</h1>
     <button id="audio-button">Survive...</button>
+  </div>
+
+  <div id="survival-hud">TIME: 05:00 AM</div>
+  
+  <div id="hydration-bar-container">
+    <div id="hydration-bar-fluid"></div>
+  </div>
+
+  <div id="health-bar-container">
+    <div id="health-bar-fluid"></div>
+  </div>
+
+  <div id="game-over-screen">
+    <div id="game-over-text">GAME OVER</div>
   </div>
 
   <a-scene id="scene" ring-spawner="playerRig: #rig; enabled: false">
@@ -86,13 +212,13 @@
 
     <a-entity id="rig" 
               position="0 0 0" 
-              wave-rider="amplitude: 0.25; speed: 1.2; eyeHeight: 0.6"
+              wave-rider="amplitude: 0.03; speed: 0.5; eyeHeight: 1.7; maxCeiling: 1.8"
               sound="src: #ambient-sea; autoplay: false; loop: true; volume: 0.8">
       <a-entity id="camera" camera look-controls wasd-controls="enabled: false; acceleration: 25"></a-entity>
     </a-entity>
 
     <a-entity id="ocean" 
-              ocean="density: 50; amplitude: 0.4; width: 1000; depth: 1000; speed: 1.2"
+              ocean="density: 50; amplitude: 0.8; width: 1000; depth: 1000; speed: 1.2"
               material="
                 color: #346fa8; 
                 roughness: 0.15; 
@@ -118,6 +244,19 @@
   </a-scene>
 
   <script>
+    // TIME ARCHITECTURE SYSTEM VARIABLES
+    let gameHours = 5;
+    let gameMinutes = 0;
+    let clockInterval = null;
+    
+    // HYDRATION SYSTEM ENGINE VARIABLES
+    let currentHydrationValue = 100;
+    let hydrationDrainInterval = null;
+
+    // HEALTH SYSTEM ENGINE VARIABLES
+    let currentHealthValue = 100;
+    let healthDrainInterval = null;
+
     // Menu Controller & Game Starter Trigger
     document.getElementById('audio-button').addEventListener('click', function() {
       var rig = document.getElementById('rig');
@@ -129,6 +268,21 @@
       var scene = document.getElementById('scene');
       scene.setAttribute('ring-spawner', 'enabled: true');
 
+      // Trigger HUD reveals and begin timing checks
+      var hud = document.getElementById('survival-hud');
+      hud.style.display = 'block';
+      
+      var hydrationHUD = document.getElementById('hydration-bar-container');
+      hydrationHUD.style.display = 'block';
+
+      var healthHUD = document.getElementById('health-bar-container');
+      healthHUD.style.display = 'block';
+      
+      startSurvivalClock();
+      
+      // Starts draining systems dynamically now that the session has begun
+      startSurvivalDrainSystems();
+
       var menu = document.getElementById('main-menu');
       menu.style.opacity = '0';
       setTimeout(function() {
@@ -136,7 +290,103 @@
       }, 500); 
     });
 
-    // GAME SPANNER: Highly responsive localized ring generator
+    // CLOCK CONTROLLER FUNCTION
+    function startSurvivalClock() {
+      clockInterval = setInterval(() => {
+        gameMinutes += 15;
+        
+        if (gameMinutes >= 60) {
+          gameMinutes = 0;
+          gameHours += 1;
+        }
+
+        let displayHours = gameHours.toString().padStart(2, '0');
+        let displayMinutes = gameMinutes.toString().padStart(2, '0');
+        
+        let hudElement = document.getElementById('survival-hud');
+        hudElement.innerText = `TIME: ${displayHours}:${displayMinutes} AM`;
+
+      }, 30000); 
+    }
+
+    // 🌊 SURVIVAL DRAIN METERS ENGINE: Runs the countdown metrics
+    function startSurvivalDrainSystems() {
+      // Hydration Drain Setup (10% every 10 seconds)
+      hydrationDrainInterval = setInterval(() => {
+        let newHydrationTotal = currentHydrationValue - 10;
+        if (newHydrationTotal <= 0) {
+          newHydrationTotal = 0;
+          updateHydrationBarDisplay(newHydrationTotal);
+          triggerGameOver();
+        } else {
+          updateHydrationBarDisplay(newHydrationTotal);
+        }
+      }, 10000);
+
+      // Health Drain Setup (Behaves exactly like the hydration loop)
+      healthDrainInterval = setInterval(() => {
+        let newHealthTotal = currentHealthValue - 10;
+        if (newHealthTotal <= 0) {
+          newHealthTotal = 0;
+          updateHealthBarDisplay(newHealthTotal);
+          triggerGameOver();
+        } else {
+          updateHealthBarDisplay(newHealthTotal);
+        }
+      }, 10000);
+    }
+
+    // SYSTEM GAME OVER TRIGGER (Modified to display full black screen overlay layout on 0%)
+    function triggerGameOver() {
+      clearInterval(hydrationDrainInterval);
+      clearInterval(healthDrainInterval);
+      clearInterval(clockInterval);
+      
+      // Deactivate spawning modules
+      document.getElementById('scene').setAttribute('ring-spawner', 'enabled: false');
+
+      // Pop the clean black fullscreen layout overlay up
+      let screenElement = document.getElementById('game-over-screen');
+      screenElement.style.display = 'flex';
+    }
+
+    // 🍾 REPLENISHMENT FUNCTION ARCHITECTURE (Stands ready for integration)
+    function collectWaterBottle() {
+      let restoredHydrationTotal = Math.min(100, currentHydrationValue + 10);
+      updateHydrationBarDisplay(restoredHydrationTotal);
+    }
+
+    // 💧 CORE FUNCTION TO MANAGE AND UPDATE THE HYDRATION BAR GRADIENT SHIFTS
+    function updateHydrationBarDisplay(targetPercentage) {
+      currentHydrationValue = Math.max(0, Math.min(100, targetPercentage));
+      let fluidElement = document.getElementById('hydration-bar-fluid');
+      fluidElement.style.width = `${currentHydrationValue}%`;
+      
+      if (currentHydrationValue > 50) {
+        fluidElement.style.backgroundColor = "#2e3085"; // blue
+        } else if (currentHydrationValue <= 50 && currentHydrationValue > 35) {
+          fluidElement.style.backgroundColor = "#45235c"; // purple
+      } else {
+        fluidElement.style.backgroundColor = "#732536"; // Deep Red
+      }
+    }
+
+    // ❤️ CORE FUNCTION TO MANAGE AND UPDATE THE HEALTH BAR GRADIENT SHIFTS
+    function updateHealthBarDisplay(targetPercentage) {
+      currentHealthValue = Math.max(0, Math.min(100, targetPercentage));
+      let fluidElement = document.getElementById('health-bar-fluid');
+      fluidElement.style.width = `${currentHealthValue}%`;
+      
+      if (currentHealthValue > 50) {
+        fluidElement.style.backgroundColor = "#2E8562"; // Stable Green
+      } else if (currentHealthValue <= 50 && currentHealthValue > 35) {
+        fluidElement.style.backgroundColor = "#785122"; // Warning Amber/Yellow
+      } else {
+        fluidElement.style.backgroundColor = "#732536"; // Danger Red
+      }
+    }
+
+    // GAME SPAWNER: Localized ring generator (Locked Settings)
     AFRAME.registerComponent('ring-spawner', {
       schema: {
         playerRig: { type: 'selector' },     
@@ -215,11 +465,11 @@
         let ringWrapper = document.createElement('a-entity');
         ringWrapper.setAttribute('position', `${spawnX} 0 ${spawnZ}`);
         
-        // Rings use the mathematical floating engine as well so they match your rhythm
         ringWrapper.setAttribute('wave-rider', {
-          amplitude: 0.15,
-          speed: 1.2,
-          eyeHeight: 0.01
+          amplitude: 0.02,
+          speed: 1.0,
+          eyeHeight: 0.01,
+          maxCeiling: 0.05
         });
 
         let innerFill = document.createElement('a-ring');
@@ -250,22 +500,19 @@
       }
     });
 
-    // 🌟 REWRITTEN WAVE-RIDER COMPONENT: Replaced buggy raycasting with beautiful, buttery-smooth trigonometry!
+    // WAVE-RIDER COMPONENT (Locked Settings)
     AFRAME.registerComponent('wave-rider', {
       schema: {
-        amplitude: { default: 0.20 },  // 📏 Control how high/deep the vertical bob is
-        speed: { default: 1.2 },       // ⏱️ Locked to match your custom ocean animation speed
-        eyeHeight: { default: 0.6 }    // ⚓️ Exact camera elevation off the water
+        amplitude: { default: 0.03 },  
+        speed: { default: 1.0 },       
+        eyeHeight: { default: 0.5 },   
+        maxCeiling: { default: 0.54 }  
       },
       tick: function (time, timeDelta) {
         let elapsedSeconds = time / 1000;
-        let pos = this.el.object3D.position;
-
-        // Uses spatial coordinate offsets mixed with time to form a perfect, continuous rolling swell wave
-        let waveValue = Math.sin(elapsedSeconds * this.data.speed + (pos.x * 0.05) + (pos.z * 0.05));
-        
-        // Apply the smooth height change without any jerky raycasting math spikes
-        this.el.object3D.position.y = (waveValue * this.data.amplitude) + this.data.eyeHeight;
+        let steadyFloat = Math.sin(elapsedSeconds * this.data.speed);
+        let calculatedHeight = (steadyFloat * this.data.amplitude) + this.data.eyeHeight;
+        this.el.object3D.position.y = Math.min(calculatedHeight, this.data.maxCeiling);
       }
     });
 
