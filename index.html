@@ -190,13 +190,14 @@
     <div id="game-over-text">GAME OVER</div>
   </div>
 
-  <a-scene id="scene" ring-spawner="playerRig: #rig; enabled: false">
+  <a-scene id="scene" ring-spawner="playerRig: #rig; enabled: false" bottle-spawner="playerRig: #rig; enabled: false">
     
     <a-assets>
       <audio id="ambient-sea" 
              src="ocean_survival2.mp3"
              preload="auto" 
              loop="false"></audio>
+      <a-asset-item id="bottle-model" src="./assets/models/military_water_bottle/scene.gltf"></a-asset-item>
     </a-assets>
 
     <a-entity environment="
@@ -267,6 +268,8 @@
 
       var scene = document.getElementById('scene');
       scene.setAttribute('ring-spawner', 'enabled: true');
+      // 🍼 Turn on the bottle spawning module when game starts
+      scene.setAttribute('bottle-spawner', 'enabled: true');
 
       // Trigger HUD reveals and begin timing checks
       var hud = document.getElementById('survival-hud');
@@ -344,16 +347,16 @@
       clearInterval(healthDrainInterval);
       clearInterval(clockInterval);
 
-
       // Deactivate spawning modules
       document.getElementById('scene').setAttribute('ring-spawner', 'enabled: false');
+      document.getElementById('scene').setAttribute('bottle-spawner', 'enabled: false');
 
       // Pop the clean black fullscreen layout overlay up
       let screenElement = document.getElementById('game-over-screen');
       screenElement.style.display = 'flex';
     }
 
-    // 🍾 REPLENISHMENT FUNCTION ARCHITECTURE (Stands ready for integration)
+    // 🍾 REPLENISHMENT FUNCTION ARCHITECTURE (Now operational and bound to 10% restoration!)
     function collectWaterBottle() {
       let restoredHydrationTotal = Math.min(100, currentHydrationValue + 10);
       updateHydrationBarDisplay(restoredHydrationTotal);
@@ -388,6 +391,83 @@
         fluidElement.style.backgroundColor = "#732536"; // Danger Red
       }
     }
+
+    // 🍼 NEW BOTTLE SPAWNER COMPONENT: Handles the single active tracking loop
+    AFRAME.registerComponent('bottle-spawner', {
+      schema: {
+        playerRig: { type: 'selector' },
+        enabled: { default: false },
+        minSpawnRadius: { default: 5 },   // Spawn far enough to require moving
+        maxSpawnRadius: { default: 15 },  // Keeping within visual reach
+        collectDistance: { default: 2.0 } // Distance to trigger collection proximity
+      },
+      init: function () {
+        this.currentBottle = null;
+      },
+      tick: function (time, timeDelta) {
+        if (!this.data.enabled || !this.data.playerRig) return;
+
+        // Step A: If no bottle exists in the scene, spawn exactly one!
+        if (!this.currentBottle) {
+          this.spawnSingleBottle();
+        }
+
+        // Step B: Proximity tracking loop calculation
+        if (this.currentBottle) {
+          let playerPos = this.data.playerRig.object3D.position;
+          let bottlePos = this.currentBottle.object3D.position;
+
+          // Measure 2D ground space delta distance
+          let dx = playerPos.x - bottlePos.x;
+          let dz = playerPos.z - bottlePos.z;
+          let distance = Math.sqrt(dx * dx + dz * dz);
+
+          // If the rig floats close enough to the bottle, collect it!
+          if (distance <= this.data.collectDistance) {
+            this.collectActiveBottle();
+          }
+        }
+      },
+      spawnSingleBottle: function () {
+        let playerPos = this.data.playerRig.object3D.position;
+
+        // Calculate a random circular vector offset point around the player
+        let angle = Math.random() * Math.PI * 2;
+        let relativeDistance = Math.random() * (this.data.maxSpawnRadius - this.data.minSpawnRadius) + this.data.minSpawnRadius;
+        
+        let spawnX = playerPos.x + (Math.cos(angle) * relativeDistance);
+        let spawnZ = playerPos.z + (Math.sin(angle) * relativeDistance);
+
+        // Generate the 3D entity wrapper
+        let bottleEntity = document.createElement('a-entity');
+        bottleEntity.setAttribute('position', `${spawnX} 0 ${spawnZ}`);
+        bottleEntity.setAttribute('gltf-model', '#bottle-model');
+        
+        // Match the environment's scale (adjust values below if your model is too huge or small)
+        bottleEntity.setAttribute('scale', '1 1 1');
+
+        // Apply your smooth floating component logic so the bottle rolls on the sea swells nicely
+        bottleEntity.setAttribute('wave-rider', {
+          amplitude: 0.02,
+          speed: 1.0,
+          eyeHeight: 0.05,
+          maxCeiling: 0.1
+        });
+
+        this.el.appendChild(bottleEntity);
+        this.currentBottle = bottleEntity;
+      },
+      collectActiveBottle: function () {
+        // Remove the bottle from the game space map
+        if (this.currentBottle.parentNode) {
+          this.currentBottle.parentNode.removeChild(this.currentBottle);
+        }
+        this.currentBottle = null; // Clearing triggers step A to spawn the next bottle next tick!
+
+        // Fire your existing survival engine hydration boost!
+        collectWaterBottle();
+      }
+    });
 
     // GAME SPAWNER: Localized ring generator (Locked Settings)
     AFRAME.registerComponent('ring-spawner', {
@@ -534,6 +614,5 @@
       }
     });
   </script>
-
 </body>
 </html>
