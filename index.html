@@ -209,15 +209,13 @@
     <a-entity id="rig" 
               position="0 0 0" 
               wasd-controls="enabled: false; acceleration: 25"
-              look-controls="enabled: false; pointerLockEnabled: true"
               sound="src: #ambient-sea; autoplay: false; loop: true; volume: 0.8"
               boat-leveler>
 
       <a-entity id="camera"
                 camera
                 position="0 1.4 0"
-                look-controls="pointerLockEnabled: true"
-                horizontal-look>
+                rotation="0 0 0">
       </a-entity>
       
       <a-entity id="player-boat"
@@ -270,7 +268,6 @@
       var rig = document.getElementById('rig');
       if (rig) {
         rig.setAttribute('wasd-controls', 'enabled: true');
-        rig.setAttribute('look-controls', 'enabled: true');
         
         if (rig.components && rig.components.sound) {
           rig.components.sound.playSound(); 
@@ -386,13 +383,6 @@
         }
       }
     }
-
-    /* 🔒 NEW COMPONENT: Locks the camera's X-axis (Pitch) to 0 so the mouse can't look up/down */
-    AFRAME.registerComponent('horizontal-look', {
-      tick: function () {
-        this.el.object3D.rotation.x = 0;
-      }
-    });
 
     /* 🔒 BOAT LEVELER COMPONENT: Keeps the overall rig flat on the water line */
     AFRAME.registerComponent('boat-leveler', {
