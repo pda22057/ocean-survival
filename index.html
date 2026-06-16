@@ -210,13 +210,15 @@
               position="0 0 0" 
               wasd-controls="enabled: false; acceleration: 25"
               look-controls="enabled: false; pointerLockEnabled: true"
-              wave-rider="amplitude: 0.03; speed: 0.5; eyeHeight: 1.7; maxCeiling: 1.8"
-              sound="src: #ambient-sea; autoplay: false; loop: true; volume: 0.8">
-              boat-leveler> <a-entity id="camera"
-                            camera
-                            position="0 1.4 0"
-                            look-controls="pointerLockEnebled: true">
-    </a-entity>
+              sound="src: #ambient-sea; autoplay: false; loop: true; volume: 0.8"
+              boat-leveler>
+
+      <a-entity id="camera"
+                camera
+                position="0 1.4 0"
+                look-controls="pointerLockEnabled: true"
+                horizontal-look>
+      </a-entity>
       
       <a-entity id="player-boat"
                 gltf-model="#boat-model"
@@ -267,7 +269,6 @@
     document.getElementById('audio-button').addEventListener('click', function() {
       var rig = document.getElementById('rig');
       if (rig) {
-        // Enable WASD movement directly on the parent rig assembly
         rig.setAttribute('wasd-controls', 'enabled: true');
         rig.setAttribute('look-controls', 'enabled: true');
         
@@ -385,6 +386,21 @@
         }
       }
     }
+
+    /* 🔒 NEW COMPONENT: Locks the camera's X-axis (Pitch) to 0 so the mouse can't look up/down */
+    AFRAME.registerComponent('horizontal-look', {
+      tick: function () {
+        this.el.object3D.rotation.x = 0;
+      }
+    });
+
+    /* 🔒 BOAT LEVELER COMPONENT: Keeps the overall rig flat on the water line */
+    AFRAME.registerComponent('boat-leveler', {
+      tick: function () {
+        let currentRotation = this.el.object3D.rotation;
+        this.el.object3D.rotation.set(0, currentRotation.y, 0);
+      }
+    });
 
     AFRAME.registerComponent('ring-spawner', {
       schema: {
