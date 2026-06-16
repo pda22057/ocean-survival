@@ -4,8 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Realistic Ocean - Ambient Sound</title>
+  
+  <base href="./">
+
   <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
-  <script src="https://unpkg.com/aframe-environment-component@1.3.3/dist/aframe-environment-component.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/aframe-environment-component@1.3.7/dist/aframe-environment-component.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.5.0/dist/aframe-extras.min.js"></script>
   
   <style>
@@ -258,31 +261,35 @@
 
     document.getElementById('audio-button').addEventListener('click', function() {
       var rig = document.getElementById('rig');
-      rig.components.sound.playSound(); 
+      if (rig && rig.components && rig.components.sound) {
+        rig.components.sound.playSound(); 
+      }
 
       var camera = document.getElementById('camera');
-      camera.setAttribute('wasd-controls', 'enabled: true');
+      if (camera) camera.setAttribute('wasd-controls', 'enabled: true');
 
       var scene = document.getElementById('scene');
-      scene.setAttribute('ring-spawner', 'enabled: true');
+      if (scene) scene.setAttribute('ring-spawner', 'enabled: true');
 
       var hud = document.getElementById('survival-hud');
-      hud.style.display = 'block';
+      if (hud) hud.style.display = 'block';
       
       var hydrationHUD = document.getElementById('hydration-bar-container');
-      hydrationHUD.style.display = 'block';
+      if (hydrationHUD) hydrationHUD.style.display = 'block';
 
       var healthHUD = document.getElementById('health-bar-container');
-      healthHUD.style.display = 'block';
+      if (healthHUD) healthHUD.style.display = 'block';
       
       startSurvivalClock();
       startSurvivalDrainSystems();
 
       var menu = document.getElementById('main-menu');
-      menu.style.opacity = '0';
-      setTimeout(function() {
-        menu.style.display = 'none';
-      }, 500); 
+      if (menu) {
+        menu.style.opacity = '0';
+        setTimeout(function() {
+          menu.style.display = 'none';
+        }, 500); 
+      }
     });
 
     function startSurvivalClock() {
@@ -295,7 +302,7 @@
         let displayHours = gameHours.toString().padStart(2, '0');
         let displayMinutes = gameMinutes.toString().padStart(2, '0');
         let hudElement = document.getElementById('survival-hud');
-        hudElement.innerText = `TIME: ${displayHours}:${displayMinutes} AM`;
+        if (hudElement) hudElement.innerText = `TIME: ${displayHours}:${displayMinutes} AM`;
       }, 30000); 
     }
 
@@ -327,9 +334,10 @@
       clearInterval(hydrationDrainInterval);
       clearInterval(healthDrainInterval);
       clearInterval(clockInterval);
-      document.getElementById('scene').setAttribute('ring-spawner', 'enabled: false');
+      let scene = document.getElementById('scene');
+      if (scene) scene.setAttribute('ring-spawner', 'enabled: false');
       let screenElement = document.getElementById('game-over-screen');
-      screenElement.style.display = 'flex';
+      if (screenElement) screenElement.style.display = 'flex';
     }
 
     function collectWaterBottle() {
@@ -340,26 +348,30 @@
     function updateHydrationBarDisplay(targetPercentage) {
       currentHydrationValue = Math.max(0, Math.min(100, targetPercentage));
       let fluidElement = document.getElementById('hydration-bar-fluid');
-      fluidElement.style.width = `${currentHydrationValue}%`;
-      if (currentHydrationValue > 50) {
-        fluidElement.style.backgroundColor = "#2e3085";
-      } else if (currentHydrationValue <= 50 && currentHydrationValue > 35) {
-        fluidElement.style.backgroundColor = "#45235c";
-      } else {
-        fluidElement.style.backgroundColor = "#732536";
+      if (fluidElement) {
+        fluidElement.style.width = `${currentHydrationValue}%`;
+        if (currentHydrationValue > 50) {
+          fluidElement.style.backgroundColor = "#2e3085";
+        } else if (currentHydrationValue <= 50 && currentHydrationValue > 35) {
+          fluidElement.style.backgroundColor = "#45235c";
+        } else {
+          fluidElement.style.backgroundColor = "#732536";
+        }
       }
     }
 
     function updateHealthBarDisplay(targetPercentage) {
       currentHealthValue = Math.max(0, Math.min(100, targetPercentage));
       let fluidElement = document.getElementById('health-bar-fluid');
-      fluidElement.style.width = `${currentHealthValue}%`;
-      if (currentHealthValue > 50) {
-        fluidElement.style.backgroundColor = "#2E8562";
-      } else if (currentHealthValue <= 50 && currentHealthValue > 35) {
-        fluidElement.style.backgroundColor = "#785122";
-      } else {
-        fluidElement.style.backgroundColor = "#732536";
+      if (fluidElement) {
+        fluidElement.style.width = `${currentHealthValue}%`;
+        if (currentHealthValue > 50) {
+          fluidElement.style.backgroundColor = "#2E8562";
+        } else if (currentHealthValue <= 50 && currentHealthValue > 35) {
+          fluidElement.style.backgroundColor = "#785122";
+        } else {
+          fluidElement.style.backgroundColor = "#732536";
+        }
       }
     }
 
