@@ -209,6 +209,7 @@
     <a-entity id="rig" 
               position="0 0 0" 
               wasd-controls="enabled: false; acceleration: 25"
+              look-controls="enabled: false; pointerLockEnabled: true"
               wave-rider="amplitude: 0.03; speed: 0.5; eyeHeight: 1.7; maxCeiling: 1.8"
               sound="src: #ambient-sea; autoplay: false; loop: true; volume: 0.8">
       
@@ -265,6 +266,8 @@
       if (rig) {
         // Enable WASD movement directly on the parent rig assembly
         rig.setAttribute('wasd-controls', 'enabled: true');
+        rig.setAttribute('look-controls', 'enabled: true');
+        
         if (rig.components && rig.components.sound) {
           rig.components.sound.playSound(); 
         }
