@@ -209,19 +209,19 @@
     <a-entity id="rig" 
               position="0 0 0" 
               wasd-controls="enabled: false; acceleration: 25"
+              look-controls="enabled: false; pointerLockEnabled: true"
               sound="src: #ambient-sea; autoplay: false; loop: true; volume: 0.8"
               boat-leveler>
 
       <a-entity id="camera"
                 camera
-                position="0 1.4 0"
-                rotation="0 0 0">
+                position="0 1.4 0">
       </a-entity>
       
       <a-entity id="player-boat"
                 gltf-model="#boat-model"
                 position="0 0.9 -0.5"
-                rotation="0 180 0"
+                rotation="0 0 0"
                 scale="5 5 5">
       </a-entity>
 
@@ -268,6 +268,7 @@
       var rig = document.getElementById('rig');
       if (rig) {
         rig.setAttribute('wasd-controls', 'enabled: true');
+        rig.setAttribute('look-controls', 'enabled: true');
         
         if (rig.components && rig.components.sound) {
           rig.components.sound.playSound(); 
@@ -384,7 +385,7 @@
       }
     }
 
-    /* 🔒 BOAT LEVELER COMPONENT: Keeps the overall rig flat on the water line */
+    /* 🔒 BOAT LEVELER COMPONENT: Κλειδώνει το Rig ώστε να μην παίρνει κλίση πάνω-κάτω (Pitch) */
     AFRAME.registerComponent('boat-leveler', {
       tick: function () {
         let currentRotation = this.el.object3D.rotation;
