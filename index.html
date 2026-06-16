@@ -221,8 +221,9 @@
       <a-entity id="player-boat"
                 gltf-model="#boat-model"
                 position="0 0.9 -0.5"
-                rotation="0 180 0"
-                scale="5 5 5">
+                rotation="0 0 0"
+                scale="5 5 5"
+                visible="false">
       </a-entity>
 
     </a-entity>
@@ -273,6 +274,12 @@
         if (rig.components && rig.components.sound) {
           rig.components.sound.playSound(); 
         }
+      }
+
+      // 🚣‍♂️ Εμφάνιση της βάρκας όταν πατηθεί το κουμπί
+      var boat = document.getElementById('player-boat');
+      if (boat) {
+        boat.setAttribute('visible', 'true');
       }
 
       var scene = document.getElementById('scene');
@@ -385,7 +392,6 @@
       }
     }
 
-    /* 🔒 BOAT LEVELER COMPONENT: Κλειδώνει το Rig ώστε να μην παίρνει κλίση πάνω-κάτω (Pitch) */
     AFRAME.registerComponent('boat-leveler', {
       tick: function () {
         let currentRotation = this.el.object3D.rotation;
