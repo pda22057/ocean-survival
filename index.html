@@ -56,17 +56,17 @@
       transform: scale(1.05);
     }
 
-    /* ⏱️ UPDATED SURVIVAL HUD CLOCK STYLE: Right-aligned and low opacity */
+    /* ⏱️ SURVIVAL HUD CLOCK STYLE */
     #survival-hud {
       position: fixed;
       top: 25px;
-      right: 30px; /* 📍 Pinned to the top-right part of the screen */
+      right: 30px;
       z-index: 999;
       display: none; 
-      background: rgba(0, 10, 20, 0.35); /* 🌫️ Lowered opacity from 0.75 to 0.35 */
+      background: rgba(0, 10, 20, 0.35);
       padding: 12px 25px;
       border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.1); /* 🌫️ Softened border edge opacity */
+      border: 1px solid rgba(255, 255, 255, 0.1);
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
       font-family: 'Courier New', Courier, monospace;
       color: #64dfdf;
@@ -80,50 +80,48 @@
     #hydration-bar-container {
       position: fixed;
       top: 25px;
-      left: 30px; /* 📍 Pinned neatly to the left side of the screen */
-      z-index: 999;
-      display: none; /* Hidden until game starts */
-      width: 240px;
-      height: 14px;
-      background: rgba(0, 0, 0, 0.2);
-      border: 4px solid #2a2833; /* Thick structural border frame */
-      border-radius: 20px; /* Rounded corners for tube effect */
-      padding: 2px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-      overflow: hidden;
-    }
-
-    /* Dynamic internal fluid core of the Hydration Bar */
-    #hydration-bar-fluid {
-      width: 100%; /* Starts fully loaded */
-      height: 100%;
-      background-color: #2e3085; /* Starting full color: Solid blue */
-      border-radius: 20px;
-      transition: width 0.3s ease, background-color 0.5s ease; /* Smooth shifts */
-    }
-
-    /* ❤️ NEW HEALTH BAR CONTAINER HUD STYLE */
-    #health-bar-container {
-      position: fixed;
-      top: 65px; /* 📍 Stacked cleanly below the hydration bar */
       left: 30px;
       z-index: 999;
-      display: none; /* Hidden until game starts */
+      display: none;
       width: 240px;
       height: 14px;
       background: rgba(0, 0, 0, 0.2);
-      border: 4px solid #2a2833; /* Matching thick structural border frame */
+      border: 4px solid #2a2833;
       border-radius: 20px;
       padding: 2px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
       overflow: hidden;
     }
 
-    /* Dynamic internal fluid core of the Health Bar */
-    #health-bar-fluid {
-      width: 100%; /* Starts fully loaded */
+    #hydration-bar-fluid {
+      width: 100%;
       height: 100%;
-      background-color: #2E8562; /* Starting full color: Custom Green */
+      background-color: #2e3085;
+      border-radius: 20px;
+      transition: width 0.3s ease, background-color 0.5s ease;
+    }
+
+    /* ❤️ HEALTH BAR CONTAINER HUD STYLE */
+    #health-bar-container {
+      position: fixed;
+      top: 65px;
+      left: 30px;
+      z-index: 999;
+      display: none;
+      width: 240px;
+      height: 14px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 4px solid #2a2833;
+      border-radius: 20px;
+      padding: 2px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+    }
+
+    #health-bar-fluid {
+      width: 100%;
+      height: 100%;
+      background-color: #2E8562;
       border-radius: 20px;
       transition: width 0.3s ease, background-color 0.5s ease;
     }
@@ -136,14 +134,13 @@
       width: 100%;
       height: 100%;
       background-color: #000000;
-      z-index: 10000; /* Layers directly over everything else when active */
+      z-index: 10000;
       display: none; 
       justify-content: center;
       align-items: center;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
-    /* ⚪ UPDATED GAME OVER TEXT STYLE: White, Up-Centered alignment, and dynamic Fade-In animation */
     #game-over-text {
       color: #ffffff;
       font-size: 64px;
@@ -151,21 +148,16 @@
       letter-spacing: 6px;
       text-transform: uppercase;
       text-shadow: 0px 4px 15px rgba(255, 255, 255, 0.2);
-      margin-bottom: 15vh; /* 📍 Pushes the text up toward the upper-center of the viewport */
+      margin-bottom: 15vh;
     }
 
-    /* Triggers the fade effect when the screen transitions to block/flex */
     #game-over-screen[style*="display: flex"] #game-over-text {
       animation: textFadeIn 1.5s ease-out forwards;
     }
 
     @keyframes textFadeIn {
-      from {
-        opacity: 0;
-      }
-      to {
-        opacity: 1;
-      }
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
   </style>
 </head>
@@ -197,7 +189,7 @@
              src="https://cdn.pixabay.com/audio/2022/03/15/audio_73d4ec7759.mp3" 
              preload="auto" 
              loop="true"></audio>
-      <a-asset-item id="boat-model" src="./assets/models/fishing_boat.glb"></a-asset-item>
+      <a-asset-item id="boat-model" src="assets/models/fishing_boat.glb"></a-asset-item>
     </a-assets>
 
     <a-entity environment="
@@ -222,7 +214,7 @@
                 gltf-model="#boat-model"
                 position="0 -1.6 0"
                 rotation="0 0 0"
-                scale="1 1 1">
+                scale="10 10 10">
       </a-entity>
 
     </a-entity>
@@ -254,20 +246,16 @@
   </a-scene>
 
   <script>
-    // TIME ARCHITECTURE SYSTEM VARIABLES
     let gameHours = 5;
     let gameMinutes = 0;
     let clockInterval = null;
     
-    // HYDRATION SYSTEM ENGINE VARIABLES
     let currentHydrationValue = 100;
     let hydrationDrainInterval = null;
 
-    // HEALTH SYSTEM ENGINE VARIABLES
     let currentHealthValue = 100;
     let healthDrainInterval = null;
 
-    // Menu Controller & Game Starter Trigger
     document.getElementById('audio-button').addEventListener('click', function() {
       var rig = document.getElementById('rig');
       rig.components.sound.playSound(); 
@@ -278,7 +266,6 @@
       var scene = document.getElementById('scene');
       scene.setAttribute('ring-spawner', 'enabled: true');
 
-      // Trigger HUD reveals and begin timing checks
       var hud = document.getElementById('survival-hud');
       hud.style.display = 'block';
       
@@ -289,8 +276,6 @@
       healthHUD.style.display = 'block';
       
       startSurvivalClock();
-      
-      // Starts draining systems dynamically now that the session has begun
       startSurvivalDrainSystems();
 
       var menu = document.getElementById('main-menu');
@@ -300,28 +285,21 @@
       }, 500); 
     });
 
-    // CLOCK CONTROLLER FUNCTION
     function startSurvivalClock() {
       clockInterval = setInterval(() => {
         gameMinutes += 15;
-        
         if (gameMinutes >= 60) {
           gameMinutes = 0;
           gameHours += 1;
         }
-
         let displayHours = gameHours.toString().padStart(2, '0');
         let displayMinutes = gameMinutes.toString().padStart(2, '0');
-        
         let hudElement = document.getElementById('survival-hud');
         hudElement.innerText = `TIME: ${displayHours}:${displayMinutes} AM`;
-
       }, 30000); 
     }
 
-    // 🌊 SURVIVAL DRAIN METERS ENGINE: Runs the countdown metrics
     function startSurvivalDrainSystems() {
-      // Hydration Drain Setup (10% every 10 seconds)
       hydrationDrainInterval = setInterval(() => {
         let newHydrationTotal = currentHydrationValue - 10;
         if (newHydrationTotal <= 0) {
@@ -333,7 +311,6 @@
         }
       }, 10000);
 
-      // Health Drain Setup (Behaves exactly like the hydration loop)
       healthDrainInterval = setInterval(() => {
         let newHealthTotal = currentHealthValue - 10;
         if (newHealthTotal <= 0) {
@@ -346,57 +323,46 @@
       }, 10000);
     }
 
-    // SYSTEM GAME OVER TRIGGER (Modified to display full black screen overlay layout on 0%)
     function triggerGameOver() {
       clearInterval(hydrationDrainInterval);
       clearInterval(healthDrainInterval);
       clearInterval(clockInterval);
-      
-      // Deactivate spawning modules
       document.getElementById('scene').setAttribute('ring-spawner', 'enabled: false');
-
-      // Pop the clean black fullscreen layout overlay up
       let screenElement = document.getElementById('game-over-screen');
       screenElement.style.display = 'flex';
     }
 
-    // 🍾 REPLENISHMENT FUNCTION ARCHITECTURE (Stands ready for integration)
     function collectWaterBottle() {
       let restoredHydrationTotal = Math.min(100, currentHydrationValue + 10);
       updateHydrationBarDisplay(restoredHydrationTotal);
     }
 
-    // 💧 CORE FUNCTION TO MANAGE AND UPDATE THE HYDRATION BAR GRADIENT SHIFTS
     function updateHydrationBarDisplay(targetPercentage) {
       currentHydrationValue = Math.max(0, Math.min(100, targetPercentage));
       let fluidElement = document.getElementById('hydration-bar-fluid');
       fluidElement.style.width = `${currentHydrationValue}%`;
-      
       if (currentHydrationValue > 50) {
-        fluidElement.style.backgroundColor = "#2e3085"; // blue
-        } else if (currentHydrationValue <= 50 && currentHydrationValue > 35) {
-          fluidElement.style.backgroundColor = "#45235c"; // purple
+        fluidElement.style.backgroundColor = "#2e3085";
+      } else if (currentHydrationValue <= 50 && currentHydrationValue > 35) {
+        fluidElement.style.backgroundColor = "#45235c";
       } else {
-        fluidElement.style.backgroundColor = "#732536"; // Deep Red
+        fluidElement.style.backgroundColor = "#732536";
       }
     }
 
-    // ❤️ CORE FUNCTION TO MANAGE AND UPDATE THE HEALTH BAR GRADIENT SHIFTS
     function updateHealthBarDisplay(targetPercentage) {
       currentHealthValue = Math.max(0, Math.min(100, targetPercentage));
       let fluidElement = document.getElementById('health-bar-fluid');
       fluidElement.style.width = `${currentHealthValue}%`;
-      
       if (currentHealthValue > 50) {
-        fluidElement.style.backgroundColor = "#2E8562"; // Stable Green
+        fluidElement.style.backgroundColor = "#2E8562";
       } else if (currentHealthValue <= 50 && currentHealthValue > 35) {
-        fluidElement.style.backgroundColor = "#785122"; // Warning Amber/Yellow
+        fluidElement.style.backgroundColor = "#785122";
       } else {
-        fluidElement.style.backgroundColor = "#732536"; // Danger Red
+        fluidElement.style.backgroundColor = "#732536";
       }
     }
 
-    // GAME SPAWNER: Localized ring generator (Locked Settings)
     AFRAME.registerComponent('ring-spawner', {
       schema: {
         playerRig: { type: 'selector' },     
@@ -419,13 +385,10 @@
       },
       tick: function (time, timeDelta) {
         if (!this.data.enabled) return;
-
         this.timer += timeDelta;
-
         if (this.timer >= this.nextSpawnTime) {
           this.timer = 0;
           this.nextSpawnTime = this.getNewSpawnTime();
-          
           if (this.activeRings.length < this.data.maxActiveRings) {
             this.spawnRing();
           }
@@ -433,7 +396,6 @@
       },
       spawnRing: function () {
         if (!this.data.playerRig) return;
-
         let playerPos = this.data.playerRig.object3D.position;
         let attempts = 0;
         let validPosition = false;
@@ -444,24 +406,19 @@
 
         while (!validPosition && attempts < 45) {
           attempts++;
-          
           let angle = Math.random() * Math.PI * 2;
           let relativeDistance = Math.random() * (this.data.maxSpawnRadius - this.data.minSpawnRadius) + this.data.minSpawnRadius;
-          
           spawnX = playerPos.x + (Math.cos(angle) * relativeDistance);
           spawnZ = playerPos.z + (Math.sin(angle) * relativeDistance);
-
           validPosition = true;
 
           for (let i = 0; i < this.activeRings.length; i++) {
             let activeRing = this.activeRings[i];
             let existingPos = activeRing.getAttribute('position');
-            
             if (existingPos) {
               let dx = spawnX - existingPos.x;
               let dz = spawnZ - existingPos.z;
               let currentDist = Math.sqrt(dx * dx + dz * dz);
-
               if (currentDist < minClearance) {
                 validPosition = false;
                 break;
@@ -474,7 +431,6 @@
 
         let ringWrapper = document.createElement('a-entity');
         ringWrapper.setAttribute('position', `${spawnX} 0 ${spawnZ}`);
-        
         ringWrapper.setAttribute('wave-rider', {
           amplitude: 0.02,
           speed: 1.0,
@@ -498,7 +454,6 @@
         ringWrapper.appendChild(innerFill);
         ringWrapper.appendChild(outerBorder);
         this.el.appendChild(ringWrapper);
-        
         this.activeRings.push(ringWrapper);
 
         setTimeout(() => {
@@ -510,7 +465,6 @@
       }
     });
 
-    // WAVE-RIDER COMPONENT (Locked Settings)
     AFRAME.registerComponent('wave-rider', {
       schema: {
         amplitude: { default: 0.03 },  
@@ -526,7 +480,6 @@
       }
     });
 
-    // Slides the shiny water ripples across the heavy rolling swells
     AFRAME.registerComponent('ocean-animator', {
       init: function () {
         this.el.addEventListener('materialtextureloaded', () => {
@@ -541,6 +494,5 @@
       }
     });
   </script>
-
 </body>
 </html>
