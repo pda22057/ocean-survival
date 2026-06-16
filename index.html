@@ -208,17 +208,18 @@
 
     <a-entity id="rig" 
               position="0 0 0" 
+              wasd-controls="enabled: false; acceleration: 25"
               wave-rider="amplitude: 0.03; speed: 0.5; eyeHeight: 1.7; maxCeiling: 1.8"
               sound="src: #ambient-sea; autoplay: false; loop: true; volume: 0.8">
       
-      <a-entity id="camera" camera look-controls wasd-controls="enabled: false; acceleration: 25"></a-entity>
+      <a-entity id="camera" camera look-controls></a-entity>
       
       <a-entity id="player-boat"
-          gltf-model="#boat-model"
-          position="0 0.5 -2"
-          rotation="0 0 0"
-          scale="5 5 5">
-</a-entity>
+                gltf-model="#boat-model"
+                position="0 -1.4 -0.5"
+                rotation="0 0 0"
+                scale="5 5 5">
+      </a-entity>
 
     </a-entity>
 
@@ -261,12 +262,13 @@
 
     document.getElementById('audio-button').addEventListener('click', function() {
       var rig = document.getElementById('rig');
-      if (rig && rig.components && rig.components.sound) {
-        rig.components.sound.playSound(); 
+      if (rig) {
+        // Enable WASD movement directly on the parent rig assembly
+        rig.setAttribute('wasd-controls', 'enabled: true');
+        if (rig.components && rig.components.sound) {
+          rig.components.sound.playSound(); 
+        }
       }
-
-      var camera = document.getElementById('camera');
-      if (camera) camera.setAttribute('wasd-controls', 'enabled: true');
 
       var scene = document.getElementById('scene');
       if (scene) scene.setAttribute('ring-spawner', 'enabled: true');
@@ -338,6 +340,9 @@
       if (scene) scene.setAttribute('ring-spawner', 'enabled: false');
       let screenElement = document.getElementById('game-over-screen');
       if (screenElement) screenElement.style.display = 'flex';
+      
+      let rig = document.getElementById('rig');
+      if (rig) rig.setAttribute('wasd-controls', 'enabled: false');
     }
 
     function collectWaterBottle() {
