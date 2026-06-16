@@ -190,14 +190,14 @@
     <div id="game-over-text">GAME OVER</div>
   </div>
 
-  <a-scene id="scene" ring-spawner="playerRig: #rig; enabled: false" bottle-spawner="playerRig: #rig; enabled: false">
+  <a-scene id="scene" ring-spawner="playerRig: #rig; enabled: false">
     
     <a-assets>
       <audio id="ambient-sea" 
-             src="ocean_survival2.mp3"
+             src="https://cdn.pixabay.com/audio/2022/03/15/audio_73d4ec7759.mp3" 
              preload="auto" 
-             loop="false"></audio>
-      <a-asset-item id="bottle-model" src="./assets/models/military_water_bottle/scene.gltf"></a-asset-item>
+             loop="true"></audio>
+      <a-asset-item id="boat-model" src="./assets/models/fishing_boat.glb"></a-asset-item>
     </a-assets>
 
     <a-entity environment="
@@ -214,8 +214,17 @@
     <a-entity id="rig" 
               position="0 0 0" 
               wave-rider="amplitude: 0.03; speed: 0.5; eyeHeight: 1.7; maxCeiling: 1.8"
-              sound="src: #ambient-sea; autoplay: false; loop: false; volume: 0.8; positional: false">
+              sound="src: #ambient-sea; autoplay: false; loop: true; volume: 0.8">
+      
       <a-entity id="camera" camera look-controls wasd-controls="enabled: false; acceleration: 25"></a-entity>
+      
+      <a-entity id="player-boat"
+                gltf-model="#boat-model"
+                position="0 -1.6 0"
+                rotation="0 0 0"
+                scale="1 1 1">
+      </a-entity>
+
     </a-entity>
 
     <a-entity id="ocean" 
@@ -268,8 +277,6 @@
 
       var scene = document.getElementById('scene');
       scene.setAttribute('ring-spawner', 'enabled: true');
-      // 🍼 Turn on the bottle spawning module when game starts
-      scene.setAttribute('bottle-spawner', 'enabled: true');
 
       // Trigger HUD reveals and begin timing checks
       var hud = document.getElementById('survival-hud');
@@ -341,22 +348,19 @@
 
     // SYSTEM GAME OVER TRIGGER (Modified to display full black screen overlay layout on 0%)
     function triggerGameOver() {
-      // 🛑 ADD THIS LINE RIGHT HERE TO STOP THE MP3 AUDIO:
-      document.getElementById('rig').components.sound.stopSound();
       clearInterval(hydrationDrainInterval);
       clearInterval(healthDrainInterval);
       clearInterval(clockInterval);
-
+      
       // Deactivate spawning modules
       document.getElementById('scene').setAttribute('ring-spawner', 'enabled: false');
-      document.getElementById('scene').setAttribute('bottle-spawner', 'enabled: false');
 
       // Pop the clean black fullscreen layout overlay up
       let screenElement = document.getElementById('game-over-screen');
       screenElement.style.display = 'flex';
     }
 
-    // 🍾 REPLENISHMENT FUNCTION ARCHITECTURE (Now operational and bound to 10% restoration!)
+    // 🍾 REPLENISHMENT FUNCTION ARCHITECTURE (Stands ready for integration)
     function collectWaterBottle() {
       let restoredHydrationTotal = Math.min(100, currentHydrationValue + 10);
       updateHydrationBarDisplay(restoredHydrationTotal);
@@ -391,83 +395,6 @@
         fluidElement.style.backgroundColor = "#732536"; // Danger Red
       }
     }
-
-    // 🍼 NEW BOTTLE SPAWNER COMPONENT: Handles the single active tracking loop
-    AFRAME.registerComponent('bottle-spawner', {
-      schema: {
-        playerRig: { type: 'selector' },
-        enabled: { default: false },
-        minSpawnRadius: { default: 5 },   // Spawn far enough to require moving
-        maxSpawnRadius: { default: 15 },  // Keeping within visual reach
-        collectDistance: { default: 2.0 } // Distance to trigger collection proximity
-      },
-      init: function () {
-        this.currentBottle = null;
-      },
-      tick: function (time, timeDelta) {
-        if (!this.data.enabled || !this.data.playerRig) return;
-
-        // Step A: If no bottle exists in the scene, spawn exactly one!
-        if (!this.currentBottle) {
-          this.spawnSingleBottle();
-        }
-
-        // Step B: Proximity tracking loop calculation
-        if (this.currentBottle) {
-          let playerPos = this.data.playerRig.object3D.position;
-          let bottlePos = this.currentBottle.object3D.position;
-
-          // Measure 2D ground space delta distance
-          let dx = playerPos.x - bottlePos.x;
-          let dz = playerPos.z - bottlePos.z;
-          let distance = Math.sqrt(dx * dx + dz * dz);
-
-          // If the rig floats close enough to the bottle, collect it!
-          if (distance <= this.data.collectDistance) {
-            this.collectActiveBottle();
-          }
-        }
-      },
-      spawnSingleBottle: function () {
-        let playerPos = this.data.playerRig.object3D.position;
-
-        // Calculate a random circular vector offset point around the player
-        let angle = Math.random() * Math.PI * 2;
-        let relativeDistance = Math.random() * (this.data.maxSpawnRadius - this.data.minSpawnRadius) + this.data.minSpawnRadius;
-        
-        let spawnX = playerPos.x + (Math.cos(angle) * relativeDistance);
-        let spawnZ = playerPos.z + (Math.sin(angle) * relativeDistance);
-
-        // Generate the 3D entity wrapper
-        let bottleEntity = document.createElement('a-entity');
-        bottleEntity.setAttribute('position', `${spawnX} 0 ${spawnZ}`);
-        bottleEntity.setAttribute('gltf-model', '#bottle-model');
-        
-        // 📐 SCALE ADJUSTMENT: Boosts the size significantly so it's clear on the horizon
-        bottleEntity.setAttribute('scale', '150 150 150');
-
-        // 🌊 WAVE FLOAT ADJUSTMENT: Sets eyeHeight slightly higher (0.15) so it floats safely on the crests
-        bottleEntity.setAttribute('wave-rider', {
-          amplitude: 0.03,
-          speed: 1.0,
-          eyeHeight: 2.5,
-          maxCeiling: 5.0
-        });
-
-        this.el.appendChild(bottleEntity);
-        this.currentBottle = bottleEntity;
-      },
-      collectActiveBottle: function () {
-        // Remove the bottle from the game space map
-        if (this.currentBottle.parentNode) {
-          this.currentBottle.parentNode.removeChild(this.currentBottle);
-        }
-        this.currentBottle = null; // Clearing triggers step A to spawn the next bottle next tick!
-
-        // Fire your existing survival engine hydration boost!
-        collectWaterBottle();
-      }
-    });
 
     // GAME SPAWNER: Localized ring generator (Locked Settings)
     AFRAME.registerComponent('ring-spawner', {
@@ -614,5 +541,6 @@
       }
     });
   </script>
+
 </body>
 </html>
