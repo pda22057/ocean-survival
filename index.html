@@ -656,7 +656,7 @@
         outerBorder3.setAttribute('material', 'color: #990000; opacity: 1; transparent: false; roughness: 1; metalness: 0');
         ringWrapper.appendChild(outerBorder3);
 
-        // 🦈 PRECISION TRIGGER SHARK GENERATION
+// 🦈 PRECISION TRIGGER SHARK GENERATION
         setTimeout(() => {
           if (ringWrapper.parentNode) {
             let shark = document.createElement('a-entity');
@@ -666,7 +666,6 @@
             shark.setAttribute('scale', '1.5 1.5 1.5'); 
             shark.setAttribute('animation-mixer', ''); 
             
-            // Explicit trigonometry rotation alignment calculation logic
             shark.addEventListener('model-loaded', () => {
               let boatVisual = document.getElementById('player-boat');
               if (boatVisual && boatVisual.object3D && shark.object3D) {
@@ -676,20 +675,13 @@
                 let sharkWorldPosition = new THREE.Vector3();
                 shark.object3D.getWorldPosition(sharkWorldPosition);
 
-                // Calculate horizontal differences relative to absolute world axes
                 let dx = boatWorldPosition.x - sharkWorldPosition.x;
                 let dz = boatWorldPosition.z - sharkWorldPosition.z;
 
-                // Determine angle step using Math.atan2
                 let angleToPlayer = Math.atan2(dx, dz);
 
-                /* 📐 GLTF MODEL AXIS OFFSET ADJUSTMENT:
-                  If the shark spawns backwards or sideways, modify this value:
-                  - Use 0 if it looks straight ahead perfectly.
-                  - Use Math.PI if it looks backward away from you.
-                  - Use Math.PI / 2 or -Math.PI / 2 if it looks sideways.
-                */
-                let modelOffset = 0; 
+                // 👇 CHANGE THIS LINE RIGHT HERE TO TURN THE SHARK LEFT 👇
+                let modelOffset = Math.PI / 4; 
                 
                 // Assign rotation cleanly on the Y axis
                 shark.object3D.rotation.set(0, angleToPlayer + modelOffset, 0);
