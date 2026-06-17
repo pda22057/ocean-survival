@@ -185,7 +185,7 @@
     <div id="game-over-text">GAME OVER</div>
   </div>
 
-  <a-scene id="scene" ring-spawner="playerRig: #rig; enabled: false">
+  <a-scene id="scene" ring-spawner="playerRig: #rig; enabled: false" bottle-spawner="playerRig: #rig; enabled: false">
     
     <a-assets>
       <audio id="ambient-sea" 
@@ -193,6 +193,7 @@
              preload="auto" 
              loop="true"></audio>
       <a-asset-item id="boat-model" src="assets/models/fishing_boat.glb"></a-asset-item>
+      <a-asset-item id="bottle-model" src="assets/models/water_bottle.glb"></a-asset-item>
     </a-assets>
 
     <a-entity environment="
@@ -276,14 +277,17 @@
         }
       }
 
-      // 🚣‍♂️ Εμφάνιση της βάρκας ΜΟΝΟ αφού πατηθεί το κουμπί
       var boat = document.getElementById('player-boat');
       if (boat) {
         boat.setAttribute('visible', 'true');
       }
 
       var scene = document.getElementById('scene');
-      if (scene) scene.setAttribute('ring-spawner', 'enabled: true');
+      if (scene) {
+        scene.setAttribute('ring-spawner', 'enabled: true');
+        // Activates the custom bottle spawning logic
+        scene.setAttribute('bottle-spawner', 'enabled: true');
+      }
 
       var hud = document.getElementById('survival-hud');
       if (hud) hud.style.display = 'block';
@@ -349,7 +353,10 @@
       clearInterval(healthDrainInterval);
       clearInterval(clockInterval);
       let scene = document.getElementById('scene');
-      if (scene) scene.setAttribute('ring-spawner', 'enabled: false');
+      if (scene) {
+        scene.setAttribute('ring-spawner', 'enabled: false');
+        scene.setAttribute('bottle-spawner', 'enabled: false');
+      }
       let screenElement = document.getElementById('game-over-screen');
       if (screenElement) screenElement.style.display = 'flex';
       
@@ -357,8 +364,9 @@
       if (rig) rig.setAttribute('wasd-controls', 'enabled: false');
     }
 
+    // Increments hydration bar by exactly 5% when collected
     function collectWaterBottle() {
-      let restoredHydrationTotal = Math.min(100, currentHydrationValue + 10);
+      let restoredHydrationTotal = Math.min(100, currentHydrationValue + 5);
       updateHydrationBarDisplay(restoredHydrationTotal);
     }
 
@@ -396,6 +404,103 @@
       tick: function () {
         let currentRotation = this.el.object3D.rotation;
         this.el.object3D.rotation.set(0, currentRotation.y, 0);
+      }
+    });
+
+    // 🍾 BOTTLE SPAWNER COMPONENT: Handles the 7 bottles max pool, lifetime, delays, and collision
+    AFRAME.registerComponent('bottle-spawner', {
+      schema: {
+        playerRig: { type: 'selector' },
+        enabled: { default: false },
+        maxBottles: { default: 7 },
+        bottleLifespan: { default: 10000 }, // 10 seconds to live
+        spawnDelay: { default: 3000 },      // 3 seconds delay between replacements
+        minRadius: { default: 5 },
+        maxRadius: { default: 40 }
+      },
+      init: function () {
+        this.activeBottles = [];
+        this.spawnQueueCount = 0; 
+        this.initialSpawnTriggered = false;
+      },
+      tick: function () {
+        if (!this.data.enabled || !this.data.playerRig) return;
+
+        // Start condition: Spawn all 7 together immediately
+        if (!this.initialSpawnTriggered) {
+          this.initialSpawnTriggered = true;
+          for (let i = 0; i < this.data.maxBottles; i++) {
+            this.spawnBottle();
+          }
+        }
+
+        // Real-time collection check: Tracks player position against active bottles
+        let playerPos = this.data.playerRig.object3D.position;
+        for (let i = this.activeBottles.length - 1; i >= 0; i--) {
+          let bottleEl = this.activeBottles[i];
+          let bottlePos = bottleEl.object3D.position;
+          
+          let dx = playerPos.x - bottlePos.x;
+          let dz = playerPos.z - bottlePos.z;
+          let distance = Math.sqrt(dx * dx + dz * dz);
+
+          // Approximate collision radius with the moving boat structure
+          if (distance < 3.5) { 
+            collectWaterBottle(); // Boosts hydration bar by 5%
+            this.removeBottle(bottleEl);
+          }
+        }
+      },
+      spawnBottle: function () {
+        if (!this.data.enabled) return;
+
+        let playerPos = this.data.playerRig.object3D.position;
+        let angle = Math.random() * Math.PI * 2;
+        let distance = Math.random() * (this.data.maxRadius - this.data.minRadius) + this.data.minRadius;
+        
+        let spawnX = playerPos.x + Math.cos(angle) * distance;
+        let spawnZ = playerPos.z + Math.sin(angle) * distance;
+
+        let bottle = document.createElement('a-entity');
+        bottle.setAttribute('gltf-model', '#bottle-model');
+        // Placed close to sea surface level (Y context matching the ocean mesh flow)
+        bottle.setAttribute('position', `${spawnX} 0.3 ${spawnZ}`); 
+        bottle.setAttribute('scale', '1 1 1'); 
+        
+        // Minor idle float effect component on the ocean
+        bottle.setAttribute('wave-rider', {
+          amplitude: 0.05,
+          speed: 1.5,
+          eyeHeight: 0.3,
+          maxCeiling: 0.5
+        });
+
+        this.el.appendChild(bottle);
+        this.activeBottles.push(bottle);
+
+        // Disappear setup if player fails to touch it within 10 seconds
+        let self = this;
+        bottle.expiryTimeout = setTimeout(function() {
+          self.removeBottle(bottle);
+        }, this.data.bottleLifespan);
+      },
+      removeBottle: function (bottleEl) {
+        if (bottleEl.expiryTimeout) clearTimeout(bottleEl.expiryTimeout);
+        
+        let index = this.activeBottles.indexOf(bottleEl);
+        if (index > -1) {
+          this.activeBottles.splice(index, 1);
+          if (bottleEl.parentNode) {
+            bottleEl.parentNode.removeChild(bottleEl);
+          }
+
+          // Enforce 3-second delay requirement before generating a replacement
+          setTimeout(() => {
+            if (this.activeBottles.length + this.spawnQueueCount < this.data.maxBottles) {
+              this.spawnBottle();
+            }
+          }, this.data.spawnDelay);
+        }
       }
     });
 
