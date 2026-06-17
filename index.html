@@ -643,8 +643,8 @@
             let shark = document.createElement('a-entity');
             shark.setAttribute('gltf-model', '#shark-model');
             // Centered relative to the parent wrapper at water level
-            shark.setAttribute('position', '0 0.1 0'); 
-            shark.setAttribute('scale', '3 3 3'); // Scaled up cleanly
+            shark.setAttribute('position', '0 -0.5 0'); 
+            shark.setAttribute('scale', '1.5 1.5 1.5'); // Scaled up cleanly
             shark.setAttribute('animation-mixer', ''); // Play native model animations if present
             ringWrapper.appendChild(shark);
           }
