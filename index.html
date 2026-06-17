@@ -540,11 +540,13 @@
           let rSize = this.data.ringRadius;
 
           for (let i = 0; i < this.activeRings.length; i++) {
-            let ringPos = this.activeRings[i].object3D.position;
+            let activeRing = this.activeRings[i];
+            let ringPos = activeRing.object3D.position;
             let dx = playerPos.x - ringPos.x;
             let dz = playerPos.z - ringPos.z;
             let distance = Math.sqrt(dx * dx + dz * dz);
 
+            // 1. Existing Ring-Bound Damage Logic (Over time within circle)
             if (distance <= rSize && this.damageCooldown <= 0) {
               let damageAmount = 5; 
               let newHealth = currentHealthValue - damageAmount;
@@ -557,6 +559,16 @@
               }
               this.damageCooldown = 3000; 
               break; 
+            }
+
+            // 2. Direct Shark Collision Logic (Instant Game Over)
+            // Checks if the shark has spawned (after 2 seconds) and if the player closely hits its center
+            if (activeRing.sharkSpawned) {
+              let directSharkCollisionRadius = 4.0; // Dynamic bounding size matching the scale of the boat and shark
+              if (distance <= directSharkCollisionRadius) {
+                triggerGameOver();
+                break;
+              }
             }
           }
         }
@@ -598,6 +610,7 @@
 
         let ringWrapper = document.createElement('a-entity');
         ringWrapper.setAttribute('position', `${spawnX} 0 ${spawnZ}`);
+        ringWrapper.sharkSpawned = false; // Custom state flag tracking live shark presence
         ringWrapper.setAttribute('wave-rider', {
           amplitude: 0.02,
           speed: 1.0,
@@ -641,10 +654,11 @@
           if (ringWrapper.parentNode) {
             let shark = document.createElement('a-entity');
             shark.setAttribute('gltf-model', '#shark-model');
-            shark.setAttribute('position', '0 -1.2 0'); 
-            shark.setAttribute('scale', '1.5 1.5 1.5'); // Reduced size
+            shark.setAttribute('position', '0 -2 0'); 
+            shark.setAttribute('scale', '1.5 1.5 1.5'); 
             shark.setAttribute('animation-mixer', ''); 
             ringWrapper.appendChild(shark);
+            ringWrapper.sharkSpawned = true; // Turn on collision flag when the asset arrives
           }
         }, 2000);
 
