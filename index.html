@@ -333,8 +333,8 @@
           newHydrationTotal = 0;
           updateHydrationBarDisplay(newHydrationTotal);
           
-          // ΜΟΝΟ ΟΤΑΝ Η ΔΙΨΑ ΠΕΣΕΙ ΣΤΟ 0%: Μείωση ζωής κατά 10%
-          let newHealthTotal = currentHealthValue - 10;
+          // ΜΟΝΟ ΟΤΑΝ Η ΔΙΨΑ ΠΕΣΕΙ ΣΤΟ 0%: Μείωση ζωής κατά 5%
+          let newHealthTotal = currentHealthValue - 5;
           if (newHealthTotal <= 0) {
             newHealthTotal = 0;
             updateHealthBarDisplay(newHealthTotal);
@@ -550,7 +550,7 @@
 
             // Αν η απόσταση είναι μικρότερη από την ακτίνα του κύκλου, ο παίκτης ακουμπάει τον κύκλο
             if (distance <= rSize && this.damageCooldown <= 0) {
-              let damageAmount = 10; // Πόση ζωή χάνει όταν ακουμπάει τον κύκλο
+              let damageAmount = 5; // Πόση ζωή χάνει όταν ακουμπάει τον κύκλο
               let newHealth = currentHealthValue - damageAmount;
               
               if (newHealth <= 0) {
@@ -559,7 +559,7 @@
               } else {
                 updateHealthBarDisplay(newHealth);
               }
-              this.damageCooldown = 1000; // Δημιουργεί αναμονή 1 δευτερολέπτου πριν την επόμενη αφαίρεση ζωής
+              this.damageCooldown = 5000; // Δημιουργεί αναμονή 5 δευτερολέπτων πριν την επόμενη αφαίρεση ζωής
               break; 
             }
           }
