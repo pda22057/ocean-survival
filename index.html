@@ -656,7 +656,7 @@
         outerBorder3.setAttribute('material', 'color: #990000; opacity: 1; transparent: false; roughness: 1; metalness: 0');
         ringWrapper.appendChild(outerBorder3);
 
-        // 🦈 SHARK GENERATION WITH ORIENTATION ADJUSTMENT
+        // 🦈 PRECISION TRIGGER SHARK GENERATION
         setTimeout(() => {
           if (ringWrapper.parentNode) {
             let shark = document.createElement('a-entity');
@@ -666,18 +666,33 @@
             shark.setAttribute('scale', '1.5 1.5 1.5'); 
             shark.setAttribute('animation-mixer', ''); 
             
-            // Wait for the shark asset to assemble its components inside Three.js
+            // Explicit trigonometry rotation alignment calculation logic
             shark.addEventListener('model-loaded', () => {
               let boatVisual = document.getElementById('player-boat');
               if (boatVisual && boatVisual.object3D && shark.object3D) {
                 let boatWorldPosition = new THREE.Vector3();
                 boatVisual.object3D.getWorldPosition(boatWorldPosition);
                 
-                // Track matching height relative to local wrapper position
-                let alignmentTarget = new THREE.Vector3(boatWorldPosition.x, shark.object3D.position.y, boatWorldPosition.z);
+                let sharkWorldPosition = new THREE.Vector3();
+                shark.object3D.getWorldPosition(sharkWorldPosition);
+
+                // Calculate horizontal differences relative to absolute world axes
+                let dx = boatWorldPosition.x - sharkWorldPosition.x;
+                let dz = boatWorldPosition.z - sharkWorldPosition.z;
+
+                // Determine angle step using Math.atan2
+                let angleToPlayer = Math.atan2(dx, dz);
+
+                /* 📐 GLTF MODEL AXIS OFFSET ADJUSTMENT:
+                  If the shark spawns backwards or sideways, modify this value:
+                  - Use 0 if it looks straight ahead perfectly.
+                  - Use Math.PI if it looks backward away from you.
+                  - Use Math.PI / 2 or -Math.PI / 2 if it looks sideways.
+                */
+                let modelOffset = 0; 
                 
-                // Turn the shark structure towards the target vector tracking point
-                shark.object3D.lookAt(alignmentTarget);
+                // Assign rotation cleanly on the Y axis
+                shark.object3D.rotation.set(0, angleToPlayer + modelOffset, 0);
               }
             });
 
