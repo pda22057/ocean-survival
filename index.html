@@ -204,7 +204,7 @@
       dressing: none; 
       ground: none; 
       lighting: distant; 
-      sunPosition: 0 4 -20
+ sunPosition: 0 4 -20
     "></a-entity>
 
     <a-entity id="rig" 
@@ -264,7 +264,7 @@
     let hydrationDrainInterval = null;
 
     let currentHealthValue = 100;
-    let healthDrainInterval = null;
+    let healthSystemActive = false; // Flag for starting custom systems
 
     document.getElementById('audio-button').addEventListener('click', function() {
       var rig = document.getElementById('rig');
@@ -300,6 +300,7 @@
       
       startSurvivalClock();
       startSurvivalDrainSystems();
+      healthSystemActive = true;
 
       var menu = document.getElementById('main-menu');
       if (menu) {
@@ -325,33 +326,32 @@
     }
 
     function startSurvivalDrainSystems() {
+      // Η δίψα πέφτει σταθερά κάθε 10 δευτερόλεπτα
       hydrationDrainInterval = setInterval(() => {
         let newHydrationTotal = currentHydrationValue - 10;
         if (newHydrationTotal <= 0) {
           newHydrationTotal = 0;
           updateHydrationBarDisplay(newHydrationTotal);
-          triggerGameOver();
+          
+          // ΜΟΝΟ ΟΤΑΝ Η ΔΙΨΑ ΠΕΣΕΙ ΣΤΟ 0%: Μείωση ζωής κατά 10%
+          let newHealthTotal = currentHealthValue - 10;
+          if (newHealthTotal <= 0) {
+            newHealthTotal = 0;
+            updateHealthBarDisplay(newHealthTotal);
+            triggerGameOver();
+          } else {
+            updateHealthBarDisplay(newHealthTotal);
+          }
         } else {
           updateHydrationBarDisplay(newHydrationTotal);
-        }
-      }, 10000);
-
-      healthDrainInterval = setInterval(() => {
-        let newHealthTotal = currentHealthValue - 10;
-        if (newHealthTotal <= 0) {
-          newHealthTotal = 0;
-          updateHealthBarDisplay(newHealthTotal);
-          triggerGameOver();
-        } else {
-          updateHealthBarDisplay(newHealthTotal);
         }
       }, 10000);
     }
 
     function triggerGameOver() {
       clearInterval(hydrationDrainInterval);
-      clearInterval(healthDrainInterval);
       clearInterval(clockInterval);
+      healthSystemActive = false;
       let scene = document.getElementById('scene');
       if (scene) {
         scene.setAttribute('ring-spawner', 'enabled: false');
@@ -506,7 +506,7 @@
         spawnMinTime: { default: 1000 },    
         spawnMaxTime: { default: 6000 },    
         maxActiveRings: { default: 2 },     
-        ringRadius: { default: 15 },        // Increased base radius from 10 to 15
+        ringRadius: { default: 15 },        
         ringLifespan: { default: 6000 },    
         minSpawnRadius: { default: 2 },     
         maxSpawnRadius: { default: 15 }     
@@ -515,18 +515,53 @@
         this.activeRings = [];
         this.timer = 0;
         this.nextSpawnTime = this.getNewSpawnTime();
+        this.damageCooldown = 0; // Cooldown για να μην πεθαίνει ακαριαία ο παίκτης στον κύκλο
       },
       getNewSpawnTime: function () {
         return Math.random() * (this.data.spawnMaxTime - this.data.spawnMinTime) + this.data.spawnMinTime;
       },
       tick: function (time, timeDelta) {
         if (!this.data.enabled) return;
+        
+        // 1. Έλεγχος Σύσπασης/Χρόνου για δημιουργία νέων κύκλων
         this.timer += timeDelta;
         if (this.timer >= this.nextSpawnTime) {
           this.timer = 0;
           this.nextSpawnTime = this.getNewSpawnTime();
           if (this.activeRings.length < this.data.maxActiveRings) {
             this.spawnRing();
+          }
+        }
+
+        // 2. ΕΛΕΓΧΟΣ ΑΝ Η ΒΑΡΚΑ ΑΚΟΥΜΠΑΕΙ ΣΤΟΥΣ ΚΟΚΚΙΝΟΥΣ ΚΥΚΛΟΥΣ
+        if (healthSystemActive && this.data.playerRig) {
+          if (this.damageCooldown > 0) {
+            this.damageCooldown -= timeDelta;
+          }
+
+          let playerPos = this.data.playerRig.object3D.position;
+          let rSize = this.data.ringRadius;
+
+          for (let i = 0; i < this.activeRings.length; i++) {
+            let ringPos = this.activeRings[i].object3D.position;
+            let dx = playerPos.x - ringPos.x;
+            let dz = playerPos.z - ringPos.z;
+            let distance = Math.sqrt(dx * dx + dz * dz);
+
+            // Αν η απόσταση είναι μικρότερη από την ακτίνα του κύκλου, ο παίκτης ακουμπάει τον κύκλο
+            if (distance <= rSize && this.damageCooldown <= 0) {
+              let damageAmount = 10; // Πόση ζωή χάνει όταν ακουμπάει τον κύκλο
+              let newHealth = currentHealthValue - damageAmount;
+              
+              if (newHealth <= 0) {
+                updateHealthBarDisplay(0);
+                triggerGameOver();
+              } else {
+                updateHealthBarDisplay(newHealth);
+              }
+              this.damageCooldown = 1000; // Δημιουργεί αναμονή 1 δευτερολέπτου πριν την επόμενη αφαίρεση ζωής
+              break; 
+            }
           }
         }
       },
@@ -574,7 +609,6 @@
           maxCeiling: 0.05
         });
 
-        // The background fill for the entire zone
         let innerFill = document.createElement('a-ring');
         innerFill.setAttribute('radius-inner', '0');
         innerFill.setAttribute('radius-outer', rSize);
@@ -582,7 +616,6 @@
         innerFill.setAttribute('material', 'color: #ff0000; opacity: 0.3; transparent: true; roughness: 1; metalness: 0');
         ringWrapper.appendChild(innerFill);
 
-        // RING 1: Outermost Border (Bright Red)
         let outerBorder1 = document.createElement('a-ring');
         outerBorder1.setAttribute('radius-inner', rSize - 0.4); 
         outerBorder1.setAttribute('radius-outer', rSize);
@@ -591,7 +624,6 @@
         outerBorder1.setAttribute('material', 'color: #ff0000; opacity: 1; transparent: false; roughness: 1; metalness: 0');
         ringWrapper.appendChild(outerBorder1);
 
-        // RING 2: Middle Border (Medium Red, spaced inward)
         let outerBorder2 = document.createElement('a-ring');
         outerBorder2.setAttribute('radius-inner', (rSize * 0.66) - 0.4); 
         outerBorder2.setAttribute('radius-outer', rSize * 0.66);
@@ -600,7 +632,6 @@
         outerBorder2.setAttribute('material', 'color: #cc0000; opacity: 1; transparent: false; roughness: 1; metalness: 0');
         ringWrapper.appendChild(outerBorder2);
 
-        // RING 3: Innermost Border (Darker Red, spaced further inward)
         let outerBorder3 = document.createElement('a-ring');
         outerBorder3.setAttribute('radius-inner', (rSize * 0.33) - 0.4); 
         outerBorder3.setAttribute('radius-outer', rSize * 0.33);
