@@ -204,7 +204,7 @@
       dressing: none; 
       ground: none; 
       lighting: distant; 
-      sunPosition: 0 4 -20
+ sunPosition: 0 4 -20
     "></a-entity>
 
     <a-entity id="rig" 
@@ -262,10 +262,9 @@
     
     let currentHydrationValue = 100;
     let hydrationDrainInterval = null;
-    let zeroHydrationInterval = null; // Νέο interval για όταν η δίψα είναι 0%
 
     let currentHealthValue = 100;
-    let healthSystemActive = false; 
+    let healthSystemActive = false; // Flag for starting custom systems
 
     document.getElementById('audio-button').addEventListener('click', function() {
       var rig = document.getElementById('rig');
@@ -289,3 +288,398 @@
         scene.setAttribute('bottle-spawner', 'enabled: true');
         scene.emit('start-spawning');
       }
+
+      var hud = document.getElementById('survival-hud');
+      if (hud) hud.style.display = 'block';
+      
+      var hydrationHUD = document.getElementById('hydration-bar-container');
+      if (hydrationHUD) hydrationHUD.style.display = 'block';
+
+      var healthHUD = document.getElementById('health-bar-container');
+      if (healthHUD) healthHUD.style.display = 'block';
+      
+      startSurvivalClock();
+      startSurvivalDrainSystems();
+      healthSystemActive = true;
+
+      var menu = document.getElementById('main-menu');
+      if (menu) {
+        menu.style.opacity = '0';
+        setTimeout(function() {
+          menu.style.display = 'none';
+        }, 500); 
+      }
+    });
+
+    function startSurvivalClock() {
+      clockInterval = setInterval(() => {
+        gameMinutes += 15;
+        if (gameMinutes >= 60) {
+          gameMinutes = 0;
+          gameHours += 1;
+        }
+        let displayHours = gameHours.toString().padStart(2, '0');
+        let displayMinutes = gameMinutes.toString().padStart(2, '0');
+        let hudElement = document.getElementById('survival-hud');
+        if (hudElement) hudElement.innerText = `TIME: ${displayHours}:${displayMinutes} AM`;
+      }, 30000); 
+    }
+
+    function startSurvivalDrainSystems() {
+      // Η δίψα πέφτει σταθερά κάθε 10 δευτερόλεπτα
+      hydrationDrainInterval = setInterval(() => {
+        let newHydrationTotal = currentHydrationValue - 10;
+        if (newHydrationTotal <= 0) {
+          newHydrationTotal = 0;
+          updateHydrationBarDisplay(newHydrationTotal);
+          
+          // ΜΟΝΟ ΟΤΑΝ Η ΔΙΨΑ ΠΕΣΕΙ ΣΤΟ 0%: Μείωση ζωής κατά 10%
+          let newHealthTotal = currentHealthValue - 10;
+          if (newHealthTotal <= 0) {
+            newHealthTotal = 0;
+            updateHealthBarDisplay(newHealthTotal);
+            triggerGameOver();
+          } else {
+            updateHealthBarDisplay(newHealthTotal);
+          }
+        } else {
+          updateHydrationBarDisplay(newHydrationTotal);
+        }
+      }, 10000);
+    }
+
+    function triggerGameOver() {
+      clearInterval(hydrationDrainInterval);
+      clearInterval(clockInterval);
+      healthSystemActive = false;
+      let scene = document.getElementById('scene');
+      if (scene) {
+        scene.setAttribute('ring-spawner', 'enabled: false');
+        scene.setAttribute('bottle-spawner', 'enabled: false');
+      }
+      let screenElement = document.getElementById('game-over-screen');
+      if (screenElement) screenElement.style.display = 'flex';
+      
+      let rig = document.getElementById('rig');
+      if (rig) rig.setAttribute('wasd-controls', 'enabled: false');
+    }
+
+    function collectWaterBottle() {
+      let restoredHydrationTotal = Math.min(100, currentHydrationValue + 5);
+      updateHydrationBarDisplay(restoredHydrationTotal);
+    }
+
+    function updateHydrationBarDisplay(targetPercentage) {
+      currentHydrationValue = Math.max(0, Math.min(100, targetPercentage));
+      let fluidElement = document.getElementById('hydration-bar-fluid');
+      if (fluidElement) {
+        fluidElement.style.width = `${currentHydrationValue}%`;
+        if (currentHydrationValue > 50) {
+          fluidElement.style.backgroundColor = "#2e3085";
+        } else if (currentHydrationValue <= 50 && currentHydrationValue > 35) {
+          fluidElement.style.backgroundColor = "#45235c";
+        } else {
+          fluidElement.style.backgroundColor = "#732536";
+        }
+      }
+    }
+
+    function updateHealthBarDisplay(targetPercentage) {
+      currentHealthValue = Math.max(0, Math.min(100, targetPercentage));
+      let fluidElement = document.getElementById('health-bar-fluid');
+      if (fluidElement) {
+        fluidElement.style.width = `${currentHealthValue}%`;
+        if (currentHealthValue > 50) {
+          fluidElement.style.backgroundColor = "#2E8562";
+        } else if (currentHealthValue <= 50 && currentHealthValue > 35) {
+          fluidElement.style.backgroundColor = "#785122";
+        } else {
+          fluidElement.style.backgroundColor = "#732536";
+        }
+      }
+    }
+
+    AFRAME.registerComponent('boat-leveler', {
+      tick: function () {
+        let currentRotation = this.el.object3D.rotation;
+        this.el.object3D.rotation.set(0, currentRotation.y, 0);
+      }
+    });
+
+    // 🍾 BOTTLE SPAWNER COMPONENT (WITH DYNAMIC RANDOM LIFESPAN)
+    AFRAME.registerComponent('bottle-spawner', {
+      schema: {
+        playerRig: { type: 'selector' },
+        enabled: { default: false },
+        maxBottles: { default: 25 },         
+        spawnDelay: { default: 8000 },      
+        minRadius: { default: 20 },
+        maxRadius: { default: 350 }
+      },
+      init: function () {
+        this.activeBottles = [];
+        
+        this.el.addEventListener('start-spawning', () => {
+          for (let i = 0; i < this.data.maxBottles; i++) {
+            this.spawnBottle();
+          }
+        });
+      },
+      tick: function () {
+        if (!this.data.enabled || !this.data.playerRig) return;
+
+        let playerPos = this.data.playerRig.object3D.position;
+        for (let i = this.activeBottles.length - 1; i >= 0; i--) {
+          let bottleEl = this.activeBottles[i];
+          let bottlePos = bottleEl.object3D.position;
+          
+          let dx = playerPos.x - bottlePos.x;
+          let dz = playerPos.z - bottlePos.z;
+          let distance = Math.sqrt(dx * dx + dz * dz);
+
+          if (distance < 3.5) { 
+            collectWaterBottle(); 
+            this.removeBottle(bottleEl, false); 
+          }
+        }
+      },
+      spawnBottle: function () {
+        let playerPos = this.data.playerRig.object3D.position;
+        
+        let angle = Math.random() * Math.PI * 2;
+        let distance = Math.random() * (this.data.maxRadius - this.data.minRadius) + this.data.minRadius;
+        
+        let spawnX = playerPos.x + Math.cos(angle) * distance;
+        let spawnZ = playerPos.z + Math.sin(angle) * distance;
+
+        let bottle = document.createElement('a-entity');
+        bottle.setAttribute('gltf-model', '#bottle-model');
+        bottle.setAttribute('position', `${spawnX} 0.3 ${spawnZ}`); 
+        bottle.setAttribute('scale', '4 4 4'); 
+        
+        bottle.setAttribute('wave-rider', {
+          amplitude: 0.05,
+          speed: 1.5,
+          eyeHeight: 0.3,
+          maxCeiling: 0.5
+        });
+
+        this.el.appendChild(bottle);
+        this.activeBottles.push(bottle);
+
+        let randomLifespan = Math.random() * (25000 - 12000) + 12000;
+
+        let self = this;
+        bottle.expiryTimeout = setTimeout(function() {
+          self.removeBottle(bottle, true); 
+        }, randomLifespan);
+      },
+      removeBottle: function (bottleEl, isExpiry) {
+        if (bottleEl.expiryTimeout) clearTimeout(bottleEl.expiryTimeout);
+        
+        let index = this.activeBottles.indexOf(bottleEl);
+        if (index > -1) {
+          this.activeBottles.splice(index, 1);
+          if (bottleEl.parentNode) {
+            bottleEl.parentNode.removeChild(bottleEl);
+          }
+
+          if (this.data.enabled) {
+            if (isExpiry) {
+              this.spawnBottle();
+            } else {
+              setTimeout(() => {
+                if (this.data.enabled && this.activeBottles.length < this.data.maxBottles) {
+                  this.spawnBottle();
+                }
+              }, this.data.spawnDelay);
+            }
+          }
+        }
+      }
+    });
+
+    AFRAME.registerComponent('ring-spawner', {
+      schema: {
+        playerRig: { type: 'selector' },     
+        enabled: { default: false },
+        spawnMinTime: { default: 1000 },    
+        spawnMaxTime: { default: 6000 },    
+        maxActiveRings: { default: 2 },     
+        ringRadius: { default: 15 },        
+        ringLifespan: { default: 6000 },    
+        minSpawnRadius: { default: 2 },     
+        maxSpawnRadius: { default: 15 }     
+      },
+      init: function () {
+        this.activeRings = [];
+        this.timer = 0;
+        this.nextSpawnTime = this.getNewSpawnTime();
+        this.damageCooldown = 0; // Cooldown για να μην πεθαίνει ακαριαία ο παίκτης στον κύκλο
+      },
+      getNewSpawnTime: function () {
+        return Math.random() * (this.data.spawnMaxTime - this.data.spawnMinTime) + this.data.spawnMinTime;
+      },
+      tick: function (time, timeDelta) {
+        if (!this.data.enabled) return;
+        
+        // 1. Έλεγχος Σύσπασης/Χρόνου για δημιουργία νέων κύκλων
+        this.timer += timeDelta;
+        if (this.timer >= this.nextSpawnTime) {
+          this.timer = 0;
+          this.nextSpawnTime = this.getNewSpawnTime();
+          if (this.activeRings.length < this.data.maxActiveRings) {
+            this.spawnRing();
+          }
+        }
+
+        // 2. ΕΛΕΓΧΟΣ ΑΝ Η ΒΑΡΚΑ ΑΚΟΥΜΠΑΕΙ ΣΤΟΥΣ ΚΟΚΚΙΝΟΥΣ ΚΥΚΛΟΥΣ
+        if (healthSystemActive && this.data.playerRig) {
+          if (this.damageCooldown > 0) {
+            this.damageCooldown -= timeDelta;
+          }
+
+          let playerPos = this.data.playerRig.object3D.position;
+          let rSize = this.data.ringRadius;
+
+          for (let i = 0; i < this.activeRings.length; i++) {
+            let ringPos = this.activeRings[i].object3D.position;
+            let dx = playerPos.x - ringPos.x;
+            let dz = playerPos.z - ringPos.z;
+            let distance = Math.sqrt(dx * dx + dz * dz);
+
+            // Αν η απόσταση είναι μικρότερη από την ακτίνα του κύκλου, ο παίκτης ακουμπάει τον κύκλο
+            if (distance <= rSize && this.damageCooldown <= 0) {
+              let damageAmount = 10; // Πόση ζωή χάνει όταν ακουμπάει τον κύκλο
+              let newHealth = currentHealthValue - damageAmount;
+              
+              if (newHealth <= 0) {
+                updateHealthBarDisplay(0);
+                triggerGameOver();
+              } else {
+                updateHealthBarDisplay(newHealth);
+              }
+              this.damageCooldown = 1000; // Δημιουργεί αναμονή 1 δευτερολέπτου πριν την επόμενη αφαίρεση ζωής
+              break; 
+            }
+          }
+        }
+      },
+      spawnRing: function () {
+        if (!this.data.playerRig) return;
+        let playerPos = this.data.playerRig.object3D.position;
+        let attempts = 0;
+        let validPosition = false;
+        let spawnX = 0;
+        let spawnZ = 0;
+        let rSize = this.data.ringRadius;
+        let minClearance = 25; 
+
+        while (!validPosition && attempts < 45) {
+          attempts++;
+          let angle = Math.random() * Math.PI * 2;
+          let relativeDistance = Math.random() * (this.data.maxSpawnRadius - this.data.minSpawnRadius) + this.data.minSpawnRadius;
+          spawnX = playerPos.x + (Math.cos(angle) * relativeDistance);
+          spawnZ = playerPos.z + (Math.sin(angle) * relativeDistance);
+          validPosition = true;
+
+          for (let i = 0; i < this.activeRings.length; i++) {
+            let activeRing = this.activeRings[i];
+            let existingPos = activeRing.getAttribute('position');
+            if (existingPos) {
+              let dx = spawnX - existingPos.x;
+              let dz = spawnZ - existingPos.z;
+              let currentDist = Math.sqrt(dx * dx + dz * dz);
+              if (currentDist < minClearance) {
+                validPosition = false;
+                break;
+              }
+            }
+          }
+        }
+
+        if (!validPosition) return; 
+
+        let ringWrapper = document.createElement('a-entity');
+        ringWrapper.setAttribute('position', `${spawnX} 0 ${spawnZ}`);
+        ringWrapper.setAttribute('wave-rider', {
+          amplitude: 0.02,
+          speed: 1.0,
+          eyeHeight: 0.01,
+          maxCeiling: 0.05
+        });
+
+        let innerFill = document.createElement('a-ring');
+        innerFill.setAttribute('radius-inner', '0');
+        innerFill.setAttribute('radius-outer', rSize);
+        innerFill.setAttribute('rotation', '-90 0 0');
+        innerFill.setAttribute('material', 'color: #ff0000; opacity: 0.3; transparent: true; roughness: 1; metalness: 0');
+        ringWrapper.appendChild(innerFill);
+
+        let outerBorder1 = document.createElement('a-ring');
+        outerBorder1.setAttribute('radius-inner', rSize - 0.4); 
+        outerBorder1.setAttribute('radius-outer', rSize);
+        outerBorder1.setAttribute('rotation', '-90 0 0');
+        outerBorder1.setAttribute('position', '0 0.01 0'); 
+        outerBorder1.setAttribute('material', 'color: #ff0000; opacity: 1; transparent: false; roughness: 1; metalness: 0');
+        ringWrapper.appendChild(outerBorder1);
+
+        let outerBorder2 = document.createElement('a-ring');
+        outerBorder2.setAttribute('radius-inner', (rSize * 0.66) - 0.4); 
+        outerBorder2.setAttribute('radius-outer', rSize * 0.66);
+        outerBorder2.setAttribute('rotation', '-90 0 0');
+        outerBorder2.setAttribute('position', '0 0.011 0'); 
+        outerBorder2.setAttribute('material', 'color: #cc0000; opacity: 1; transparent: false; roughness: 1; metalness: 0');
+        ringWrapper.appendChild(outerBorder2);
+
+        let outerBorder3 = document.createElement('a-ring');
+        outerBorder3.setAttribute('radius-inner', (rSize * 0.33) - 0.4); 
+        outerBorder3.setAttribute('radius-outer', rSize * 0.33);
+        outerBorder3.setAttribute('rotation', '-90 0 0');
+        outerBorder3.setAttribute('position', '0 0.012 0'); 
+        outerBorder3.setAttribute('material', 'color: #990000; opacity: 1; transparent: false; roughness: 1; metalness: 0');
+        ringWrapper.appendChild(outerBorder3);
+
+        this.el.appendChild(ringWrapper);
+        this.activeRings.push(ringWrapper);
+
+        setTimeout(() => {
+          if (ringWrapper.parentNode) {
+            ringWrapper.parentNode.removeChild(ringWrapper);
+          }
+          this.activeRings = this.activeRings.filter(r => r !== ringWrapper);
+        }, this.data.ringLifespan);
+      }
+    });
+
+    AFRAME.registerComponent('wave-rider', {
+      schema: {
+        amplitude: { default: 0.03 },  
+        speed: { default: 1.0 },       
+        eyeHeight: { default: 0.5 },   
+        maxCeiling: { default: 0.54 }  
+      },
+      tick: function (time, timeDelta) {
+        let elapsedSeconds = time / 1000;
+        let steadyFloat = Math.sin(elapsedSeconds * this.data.speed);
+        let calculatedHeight = (steadyFloat * this.data.amplitude) + this.data.eyeHeight;
+        this.el.object3D.position.y = Math.min(calculatedHeight, this.data.maxCeiling);
+      }
+    });
+
+    AFRAME.registerComponent('ocean-animator', {
+      init: function () {
+        this.el.addEventListener('materialtextureloaded', () => {
+          this.material = this.el.getObject3D('mesh').material;
+        });
+      },
+      tick: function (time, timeDelta) {
+        if (this.material && this.material.normalMap) {
+          this.material.normalMap.offset.x = (time * 0.000008);
+          this.material.normalMap.offset.y = (time * 0.000004);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
