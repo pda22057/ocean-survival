@@ -517,7 +517,7 @@
         this.damageCooldown = 0; 
         
         this.playerWorldPos = new THREE.Vector3();
-        this.ringWorldPos = new THREE.Vector3();
+        this.sharkWorldPos = new THREE.Vector3();
       },
       getNewSpawnTime: function () {
         return Math.random() * (this.data.spawnMaxTime - this.data.spawnMinTime) + this.data.spawnMinTime;
@@ -541,29 +541,34 @@
 
           let boatVisual = document.getElementById('player-boat');
           if (boatVisual && boatVisual.object3D) {
+            // Track actual visual boat center coordinates in the world
             boatVisual.object3D.getWorldPosition(this.playerWorldPos);
             
             let rSize = this.data.ringRadius;
-            let interiorDeathRadius = 4.5; 
+            let physicalHitRadius = 3.5; // Distance threshold to trigger game over/damage from shark model
 
             for (let i = 0; i < this.activeRings.length; i++) {
               let activeRing = this.activeRings[i];
-              if (activeRing.object3D) {
-                activeRing.object3D.getWorldPosition(this.ringWorldPos);
+              // Search inside the ring wrapper for the spawned shark entity
+              let sharkEntity = activeRing.querySelector('.shark');
+              
+              if (sharkEntity && sharkEntity.object3D) {
+                // Track actual 3D coordinates of the physical shark model
+                sharkEntity.object3D.getWorldPosition(this.sharkWorldPos);
                 
-                let dx = this.playerWorldPos.x - this.ringWorldPos.x;
-                let dz = this.playerWorldPos.z - this.ringWorldPos.z;
-                let distanceToCenter = Math.sqrt(dx * dx + dz * dz);
+                let dx = this.playerWorldPos.x - this.sharkWorldPos.x;
+                let dz = this.playerWorldPos.z - this.sharkWorldPos.z;
+                let distanceToShark = Math.sqrt(dx * dx + dz * dz);
 
-                // 1. INSTANT INTERIOR ZONE TRIGGER
-                if (distanceToCenter <= interiorDeathRadius) {
+                // 1. PHYSICAL CONTACT WITH SHARK ZONE TRIGGER
+                if (distanceToShark <= physicalHitRadius) {
                   updateHealthBarDisplay(0);
                   triggerGameOver();
                   return; 
                 }
 
-                // 2. PASSIVE OUTSIDE EDGE RING WARNING TICK
-                if (distanceToCenter <= rSize && this.damageCooldown <= 0) {
+                // 2. PASSIVE DISTANCE WARNING DRAIN TICK
+                if (distanceToShark <= rSize && this.damageCooldown <= 0) {
                   let damageAmount = 5; 
                   let newHealth = currentHealthValue - damageAmount;
                   
@@ -656,7 +661,7 @@
         outerBorder3.setAttribute('material', 'color: #990000; opacity: 1; transparent: false; roughness: 1; metalness: 0');
         ringWrapper.appendChild(outerBorder3);
 
-// 🦈 PRECISION TRIGGER SHARK GENERATION
+        // 🦈 PRECISION TRIGGER SHARK GENERATION
         setTimeout(() => {
           if (ringWrapper.parentNode) {
             let shark = document.createElement('a-entity');
@@ -680,7 +685,7 @@
 
                 let angleToPlayer = Math.atan2(dx, dz);
 
-                // 👇 CHANGE THIS LINE RIGHT HERE TO TURN THE SHARK LEFT 👇
+                // Adjusted tracking rotation math offset
                 let modelOffset = Math.PI / 4; 
                 
                 // Assign rotation cleanly on the Y axis
