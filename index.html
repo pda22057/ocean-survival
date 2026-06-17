@@ -516,9 +516,8 @@
         this.nextSpawnTime = this.getNewSpawnTime();
         this.damageCooldown = 0; 
         
-        // Reusable vectors for clean, non-garbage collecting math checks
         this.playerWorldPos = new THREE.Vector3();
-        this.sharkWorldPos = new THREE.Vector3();
+        this.ringWorldPos = new THREE.Vector3();
       },
       getNewSpawnTime: function () {
         return Math.random() * (this.data.spawnMaxTime - this.data.spawnMinTime) + this.data.spawnMinTime;
@@ -540,56 +539,44 @@
             this.damageCooldown -= timeDelta;
           }
 
-          // 1. DIRECT SHARK WORLD-SPACE COLLISION DETECTOR (INSTANT GAME OVER)
-          let sharkEntities = document.querySelectorAll('.shark');
           let boatVisual = document.getElementById('player-boat');
-          
           if (boatVisual && boatVisual.object3D) {
             boatVisual.object3D.getWorldPosition(this.playerWorldPos);
             
-            for (let s = 0; s < sharkEntities.length; s++) {
-              let sharkObj = sharkEntities[s].object3D;
-              if (sharkObj) {
-                sharkObj.getWorldPosition(this.sharkWorldPos);
-                
-                // Calculate actual distance in standard horizontal plane (X and Z)
-                let dx = this.playerWorldPos.x - this.sharkWorldPos.x;
-                let dz = this.playerWorldPos.z - this.sharkWorldPos.z;
-                let exactHorizontalDistance = Math.sqrt(dx * dx + dz * dz);
+            let rSize = this.data.ringRadius;
+            let interiorDeathRadius = 4.5; // Horizontal interior threshold line
 
-                // If shark touches the physical bounds of the boat
-                if (exactHorizontalDistance <= 4.5) {
+            for (let i = 0; i < this.activeRings.length; i++) {
+              let activeRing = this.activeRings[i];
+              if (activeRing.object3D) {
+                activeRing.object3D.getWorldPosition(this.ringWorldPos);
+                
+                let dx = this.playerWorldPos.x - this.ringWorldPos.x;
+                let dz = this.playerWorldPos.z - this.ringWorldPos.z;
+                let distanceToCenter = Math.sqrt(dx * dx + dz * dz);
+
+                // 1. INSTANT INTERIOR ZONE TRIGGER (DEATH IF INSIDE CENTER EVEN WITHOUT SHARK VISUAL)
+                if (distanceToCenter <= interiorDeathRadius) {
                   updateHealthBarDisplay(0);
                   triggerGameOver();
-                  return; // Stop running any further tick updates immediately
+                  return; 
+                }
+
+                // 2. PASSIVE OUTSIDE EDGE RING WARNING TICK (3-SECOND COOLDOWN APPLIED IN INTERMEDIATE TIERS)
+                if (distanceToCenter <= rSize && this.damageCooldown <= 0) {
+                  let damageAmount = 5; 
+                  let newHealth = currentHealthValue - damageAmount;
+                  
+                  if (newHealth <= 0) {
+                    updateHealthBarDisplay(0);
+                    triggerGameOver();
+                  } else {
+                    updateHealthBarDisplay(newHealth);
+                  }
+                  this.damageCooldown = 3000; 
+                  break; 
                 }
               }
-            }
-          }
-
-          // 2. PASSIVE RED RING ENVIRONMENTAL DAMAGE (DEALS OVER TIME IN RADIUS)
-          let playerPos = this.data.playerRig.object3D.position;
-          let rSize = this.data.ringRadius;
-
-          for (let i = 0; i < this.activeRings.length; i++) {
-            let activeRing = this.activeRings[i];
-            let ringPos = activeRing.object3D.position;
-            let rdx = playerPos.x - ringPos.x;
-            let rdz = playerPos.z - ringPos.z;
-            let distanceToRing = Math.sqrt(rdx * rdx + rdz * rdz);
-
-            if (distanceToRing <= rSize && this.damageCooldown <= 0) {
-              let damageAmount = 5; 
-              let newHealth = currentHealthValue - damageAmount;
-              
-              if (newHealth <= 0) {
-                updateHealthBarDisplay(0);
-                triggerGameOver();
-              } else {
-                updateHealthBarDisplay(newHealth);
-              }
-              this.damageCooldown = 3000; 
-              break; 
             }
           }
         }
@@ -674,7 +661,7 @@
           if (ringWrapper.parentNode) {
             let shark = document.createElement('a-entity');
             shark.setAttribute('gltf-model', '#shark-model');
-            shark.setAttribute('class', 'shark'); // Fixed target hook class for collision checks
+            shark.setAttribute('class', 'shark'); 
             shark.setAttribute('position', '0 -2.5 0'); 
             shark.setAttribute('scale', '1.5 1.5 1.5'); 
             shark.setAttribute('animation-mixer', ''); 
