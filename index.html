@@ -285,7 +285,6 @@
       var scene = document.getElementById('scene');
       if (scene) {
         scene.setAttribute('ring-spawner', 'enabled: true');
-        // Activates the custom bottle spawning logic
         scene.setAttribute('bottle-spawner', 'enabled: true');
       }
 
@@ -364,7 +363,6 @@
       if (rig) rig.setAttribute('wasd-controls', 'enabled: false');
     }
 
-    // Increments hydration bar by exactly 5% when collected
     function collectWaterBottle() {
       let restoredHydrationTotal = Math.min(100, currentHydrationValue + 5);
       updateHydrationBarDisplay(restoredHydrationTotal);
@@ -413,20 +411,20 @@
         playerRig: { type: 'selector' },
         enabled: { default: false },
         maxBottles: { default: 7 },
-        bottleLifespan: { default: 15000 }, // 10 seconds to live
-        spawnDelay: { default: 10000 },      // 3 seconds delay between replacements
-        minRadius: { default: 5 },
-        maxRadius: { default: 40 }
+        bottleLifespan: { default: 15000 }, 
+        spawnDelay: { default: 10000 },      
+        // 🔄 CHALLENGE BALANCING: Increased radii so they spawn far out and scattered
+        minRadius: { default: 15 },
+        maxRadius: { default: 65 }
       },
       init: function () {
         this.activeBottles = [];
-        this.spawnQueueCount = 0; 
         this.initialSpawnTriggered = false;
       },
       tick: function () {
         if (!this.data.enabled || !this.data.playerRig) return;
 
-        // Start condition: Spawn all 7 together immediately
+        // INSTANT START CONDITION: Spawns all initial bottles immediately on button press
         if (!this.initialSpawnTriggered) {
           this.initialSpawnTriggered = true;
           for (let i = 0; i < this.data.maxBottles; i++) {
@@ -434,7 +432,6 @@
           }
         }
 
-        // Real-time collection check: Tracks player position against active bottles
         let playerPos = this.data.playerRig.object3D.position;
         for (let i = this.activeBottles.length - 1; i >= 0; i--) {
           let bottleEl = this.activeBottles[i];
@@ -444,10 +441,9 @@
           let dz = playerPos.z - bottlePos.z;
           let distance = Math.sqrt(dx * dx + dz * dz);
 
-          // Approximate collision radius with the moving boat structure
           if (distance < 3.5) { 
-            collectWaterBottle(); // Boosts hydration bar by 5%
-            this.removeBottle(bottleEl);
+            collectWaterBottle(); 
+            this.removeBottle(bottleEl, false); // false flag means collected, don't ignore delay logic
           }
         }
       },
@@ -463,11 +459,9 @@
 
         let bottle = document.createElement('a-entity');
         bottle.setAttribute('gltf-model', '#bottle-model');
-        // Placed close to sea surface level (Y context matching the ocean mesh flow)
         bottle.setAttribute('position', `${spawnX} 0.3 ${spawnZ}`); 
         bottle.setAttribute('scale', '4 4 4'); 
         
-        // Minor idle float effect component on the ocean
         bottle.setAttribute('wave-rider', {
           amplitude: 0.05,
           speed: 1.5,
@@ -478,13 +472,12 @@
         this.el.appendChild(bottle);
         this.activeBottles.push(bottle);
 
-        // Disappear setup if player fails to touch it within 10 seconds
         let self = this;
         bottle.expiryTimeout = setTimeout(function() {
-          self.removeBottle(bottle);
+          self.removeBottle(bottle, true); // true flag means expired naturally
         }, this.data.bottleLifespan);
       },
-      removeBottle: function (bottleEl) {
+      removeBottle: function (bottleEl, isExpiry) {
         if (bottleEl.expiryTimeout) clearTimeout(bottleEl.expiryTimeout);
         
         let index = this.activeBottles.indexOf(bottleEl);
@@ -494,12 +487,20 @@
             bottleEl.parentNode.removeChild(bottleEl);
           }
 
-          // Enforce 3-second delay requirement before generating a replacement
-          setTimeout(() => {
-            if (this.activeBottles.length + this.spawnQueueCount < this.data.maxBottles) {
+          // Fixed structural timing loop: instantly replaces if scene is active and counts match up
+          if (this.data.enabled) {
+            if (isExpiry) {
+              // Re-spawn missing quantities right away to preserve constant target count if expired
               this.spawnBottle();
+            } else {
+              // Maintain your custom 10-second replacement buffer strictly for collected items
+              setTimeout(() => {
+                if (this.data.enabled && this.activeBottles.length < this.data.maxBottles) {
+                  this.spawnBottle();
+                }
+              }, this.data.spawnDelay);
             }
-          }, this.data.spawnDelay);
+          }
         }
       }
     });
