@@ -194,6 +194,7 @@
              loop="true"></audio>
       <a-asset-item id="boat-model" src="assets/models/fishing_boat.glb"></a-asset-item>
       <a-asset-item id="bottle-model" src="assets/models/water_canteen_-_pbr_game_ready_asset.glb"></a-asset-item>
+      <a-asset-item id="shark-model" src="assets/models/shark.glb"></a-asset-item>
     </a-assets>
 
     <a-entity environment="
@@ -204,7 +205,7 @@
       dressing: none; 
       ground: none; 
       lighting: distant; 
- sunPosition: 0 4 -20
+      sunPosition: 0 4 -20
     "></a-entity>
 
     <a-entity id="rig" 
@@ -264,7 +265,7 @@
     let hydrationDrainInterval = null;
 
     let currentHealthValue = 100;
-    let healthSystemActive = false; // Flag for starting custom systems
+    let healthSystemActive = false; 
 
     document.getElementById('audio-button').addEventListener('click', function() {
       var rig = document.getElementById('rig');
@@ -326,14 +327,12 @@
     }
 
     function startSurvivalDrainSystems() {
-      // Η δίψα πέφτει σταθερά κάθε 10 δευτερόλεπτα
       hydrationDrainInterval = setInterval(() => {
         let newHydrationTotal = currentHydrationValue - 10;
         if (newHydrationTotal <= 0) {
           newHydrationTotal = 0;
           updateHydrationBarDisplay(newHydrationTotal);
           
-          // ΜΟΝΟ ΟΤΑΝ Η ΔΙΨΑ ΠΕΣΕΙ ΣΤΟ 0%: Μείωση ζωής κατά 5%
           let newHealthTotal = currentHealthValue - 5;
           if (newHealthTotal <= 0) {
             newHealthTotal = 0;
@@ -406,7 +405,7 @@
       }
     });
 
-    // 🍾 BOTTLE SPAWNER COMPONENT (WITH DYNAMIC RANDOM LIFESPAN)
+    // 🍾 BOTTLE SPAWNER COMPONENT
     AFRAME.registerComponent('bottle-spawner', {
       schema: {
         playerRig: { type: 'selector' },
@@ -515,7 +514,7 @@
         this.activeRings = [];
         this.timer = 0;
         this.nextSpawnTime = this.getNewSpawnTime();
-        this.damageCooldown = 0; // Cooldown για να μην πεθαίνει ακαριαία ο παίκτης στον κύκλο
+        this.damageCooldown = 0; 
       },
       getNewSpawnTime: function () {
         return Math.random() * (this.data.spawnMaxTime - this.data.spawnMinTime) + this.data.spawnMinTime;
@@ -523,7 +522,6 @@
       tick: function (time, timeDelta) {
         if (!this.data.enabled) return;
         
-        // 1. Έλεγχος Σύσπασης/Χρόνου για δημιουργία νέων κύκλων
         this.timer += timeDelta;
         if (this.timer >= this.nextSpawnTime) {
           this.timer = 0;
@@ -533,7 +531,6 @@
           }
         }
 
-        // 2. ΕΛΕΓΧΟΣ ΑΝ Η ΒΑΡΚΑ ΑΚΟΥΜΠΑΕΙ ΣΤΟΥΣ ΚΟΚΚΙΝΟΥΣ ΚΥΚΛΟΥΣ
         if (healthSystemActive && this.data.playerRig) {
           if (this.damageCooldown > 0) {
             this.damageCooldown -= timeDelta;
@@ -548,9 +545,8 @@
             let dz = playerPos.z - ringPos.z;
             let distance = Math.sqrt(dx * dx + dz * dz);
 
-            // Αν η απόσταση είναι μικρότερη από την ακτίνα του κύκλου, ο παίκτης ακουμπάει τον κύκλο
             if (distance <= rSize && this.damageCooldown <= 0) {
-              let damageAmount = 5; // Πόση ζωή χάνει όταν ακουμπάει τον κύκλο
+              let damageAmount = 5; 
               let newHealth = currentHealthValue - damageAmount;
               
               if (newHealth <= 0) {
@@ -559,7 +555,7 @@
               } else {
                 updateHealthBarDisplay(newHealth);
               }
-              this.damageCooldown = 3000; // Δημιουργεί αναμονή 5 δευτερολέπτων πριν την επόμενη αφαίρεση ζωής
+              this.damageCooldown = 3000; 
               break; 
             }
           }
@@ -639,6 +635,20 @@
         outerBorder3.setAttribute('position', '0 0.012 0'); 
         outerBorder3.setAttribute('material', 'color: #990000; opacity: 1; transparent: false; roughness: 1; metalness: 0');
         ringWrapper.appendChild(outerBorder3);
+
+        // 🦈 SHARK GENERATION: 2 seconds after the ring wrapper spawns
+        setTimeout(() => {
+          // Check if the ring is still alive in the scene before building the shark
+          if (ringWrapper.parentNode) {
+            let shark = document.createElement('a-entity');
+            shark.setAttribute('gltf-model', '#shark-model');
+            // Centered relative to the parent wrapper at water level
+            shark.setAttribute('position', '0 0.1 0'); 
+            shark.setAttribute('scale', '3 3 3'); // Scaled up cleanly
+            shark.setAttribute('animation-mixer', ''); // Play native model animations if present
+            ringWrapper.appendChild(shark);
+          }
+        }, 2000);
 
         this.el.appendChild(ringWrapper);
         this.activeRings.push(ringWrapper);
