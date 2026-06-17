@@ -454,19 +454,22 @@
 
         let bottle = document.createElement('a-entity');
         bottle.setAttribute('gltf-model', '#bottle-model');
-        bottle.setAttribute('position', `${spawnX} 0.3 ${spawnZ}`); 
+        // Initial Y is slightly high, wave-rider will adjust it down to sea level
+        bottle.setAttribute('position', `${spawnX} 0.6 ${spawnZ}`); 
         bottle.setAttribute('scale', '4 4 4'); 
         
+        // Minor idle float effect component on the ocean, makes it go up and down
         bottle.setAttribute('wave-rider', {
-          amplitude: 0.05,
-          speed: 1.5,
-          eyeHeight: 0.3,
-          maxCeiling: 0.5
+          amplitude: 0.1,  // Up and down distance
+          speed: 1.5,      // Floating speed
+          eyeHeight: 0.3,  // Baseline Y offset from the position Y
+          maxCeiling: 0.5  // Max Y ceiling for the effect
         });
 
         this.el.appendChild(bottle);
         this.activeBottles.push(bottle);
 
+        // 🎲 ΤΥΧΑΙΟΤΗΤΑ: Υπολογισμός τυχαίας διάρκειας ζωής από 12 έως 25 δευτερόλεπτα
         let randomLifespan = Math.random() * (25000 - 12000) + 12000;
 
         let self = this;
