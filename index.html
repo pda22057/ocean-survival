@@ -515,6 +515,10 @@
         this.timer = 0;
         this.nextSpawnTime = this.getNewSpawnTime();
         this.damageCooldown = 0; 
+        
+        // Re-usable vectors for fast runtime memory tracking 
+        this.playerVec = new THREE.Vector3();
+        this.sharkVec = new THREE.Vector3();
       },
       getNewSpawnTime: function () {
         return Math.random() * (this.data.spawnMaxTime - this.data.spawnMinTime) + this.data.spawnMinTime;
@@ -536,18 +540,20 @@
             this.damageCooldown -= timeDelta;
           }
 
-          let playerPos = this.data.playerRig.object3D.position;
+          // Get the player rig's current position vector
+          this.data.playerRig.object3D.getWorldPosition(this.playerVec);
           let rSize = this.data.ringRadius;
 
           for (let i = 0; i < this.activeRings.length; i++) {
             let activeRing = this.activeRings[i];
             let ringPos = activeRing.object3D.position;
-            let dx = playerPos.x - ringPos.x;
-            let dz = playerPos.z - ringPos.z;
-            let distance = Math.sqrt(dx * dx + dz * dz);
+            
+            let dx = this.playerVec.x - ringPos.x;
+            let dz = this.playerVec.z - ringPos.z;
+            let surfaceDistance = Math.sqrt(dx * dx + dz * dz);
 
             // 1. Existing Ring-Bound Damage Logic (Over time within circle)
-            if (distance <= rSize && this.damageCooldown <= 0) {
+            if (surfaceDistance <= rSize && this.damageCooldown <= 0) {
               let damageAmount = 5; 
               let newHealth = currentHealthValue - damageAmount;
               
@@ -561,11 +567,19 @@
               break; 
             }
 
-            // 2. Direct Shark Collision Logic (Instant Game Over)
-            if (activeRing.sharkSpawned) {
-              // Using 4.5 tracking window coordinates perfectly mapped to the baseline rig wrapper.
-              let directSharkCollisionRadius = 4.5; 
-              if (distance <= directSharkCollisionRadius) {
+            // 2. Direct Shark Collision Logic (Fixed 3D Matrix Distance Check)
+            if (activeRing.sharkSpawned && activeRing.sharkEntity) {
+              // Extract absolute coordinates of the shark body directly
+              activeRing.sharkEntity.object3D.getWorldPosition(this.sharkVec);
+              
+              // Compute spatial difference matrix vector across X and Z planes
+              let diffX = this.playerVec.x - this.sharkVec.x;
+              let diffZ = this.playerVec.z - this.sharkVec.z;
+              let realTimeDistance = Math.sqrt(diffX * diffX + diffZ * diffZ);
+
+              // 5.5 radius handles the scale footprint of the boat body hitting the shark
+              let directSharkCollisionRadius = 5.5; 
+              if (realTimeDistance <= directSharkCollisionRadius) {
                 triggerGameOver();
                 break;
               }
@@ -610,7 +624,8 @@
 
         let ringWrapper = document.createElement('a-entity');
         ringWrapper.setAttribute('position', `${spawnX} 0 ${spawnZ}`);
-        ringWrapper.sharkSpawned = false; // Custom state flag tracking live shark presence
+        ringWrapper.sharkSpawned = false; 
+        ringWrapper.sharkEntity = null; // Store reference to track the shark entity directly
         ringWrapper.setAttribute('wave-rider', {
           amplitude: 0.02,
           speed: 1.0,
@@ -658,7 +673,9 @@
             shark.setAttribute('scale', '1.5 1.5 1.5'); 
             shark.setAttribute('animation-mixer', ''); 
             ringWrapper.appendChild(shark);
-            ringWrapper.sharkSpawned = true; // Turn on collision flag when the asset arrives
+            
+            ringWrapper.sharkEntity = shark; // Map internal element access link
+            ringWrapper.sharkSpawned = true; 
           }
         }, 2000);
 
