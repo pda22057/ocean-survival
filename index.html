@@ -406,15 +406,13 @@
       }
     });
 
-    // 🍾 BOTTLE SPAWNER COMPONENT (UPDATED FOR OPEN WORLD EXPLORATION)
+    // 🍾 BOTTLE SPAWNER COMPONENT (WITH DYNAMIC RANDOM LIFESPAN)
     AFRAME.registerComponent('bottle-spawner', {
       schema: {
         playerRig: { type: 'selector' },
         enabled: { default: false },
-        maxBottles: { default: 25 },         // 📈 Περισσότερα μπουκάλια για να είναι γεμάτος ο μεγάλος χάρτης
-        bottleLifespan: { default: 120000 }, // ⏳ 2 λεπτά ζωή για να προλαβαίνεις να τα φτάσεις
+        maxBottles: { default: 25 },         
         spawnDelay: { default: 8000 },      
-        // 🌊 ΑΠΕΡΑΝΤΟΣ ΩΚΕΑΝΟΣ: Πολύ μεγαλύτερο εύρος (20 έως 350 μέτρα)
         minRadius: { default: 20 },
         maxRadius: { default: 350 }
       },
@@ -448,7 +446,6 @@
       spawnBottle: function () {
         let playerPos = this.data.playerRig.object3D.position;
         
-        // 🔄 360 ΜΟΙΡΕΣ: Δημιουργία σε όλο τον κύκλο (μπροστά, πίσω, παντού)
         let angle = Math.random() * Math.PI * 2;
         let distance = Math.random() * (this.data.maxRadius - this.data.minRadius) + this.data.minRadius;
         
@@ -470,10 +467,13 @@
         this.el.appendChild(bottle);
         this.activeBottles.push(bottle);
 
+        // 🎲 ΤΥΧΑΙΟΤΗΤΑ: Υπολογισμός τυχαίας διάρκειας ζωής από 7 έως 15 δευτερόλεπτα
+        let randomLifespan = Math.random() * (15000 - 7000) + 7000;
+
         let self = this;
         bottle.expiryTimeout = setTimeout(function() {
           self.removeBottle(bottle, true); 
-        }, this.data.bottleLifespan);
+        }, randomLifespan);
       },
       removeBottle: function (bottleEl, isExpiry) {
         if (bottleEl.expiryTimeout) clearTimeout(bottleEl.expiryTimeout);
