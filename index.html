@@ -544,7 +544,7 @@
             boatVisual.object3D.getWorldPosition(this.playerWorldPos);
             
             let rSize = this.data.ringRadius;
-            let interiorDeathRadius = 4.5; // Horizontal interior threshold line
+            let interiorDeathRadius = 4.5; 
 
             for (let i = 0; i < this.activeRings.length; i++) {
               let activeRing = this.activeRings[i];
@@ -555,14 +555,14 @@
                 let dz = this.playerWorldPos.z - this.ringWorldPos.z;
                 let distanceToCenter = Math.sqrt(dx * dx + dz * dz);
 
-                // 1. INSTANT INTERIOR ZONE TRIGGER (DEATH IF INSIDE CENTER EVEN WITHOUT SHARK VISUAL)
+                // 1. INSTANT INTERIOR ZONE TRIGGER
                 if (distanceToCenter <= interiorDeathRadius) {
                   updateHealthBarDisplay(0);
                   triggerGameOver();
                   return; 
                 }
 
-                // 2. PASSIVE OUTSIDE EDGE RING WARNING TICK (3-SECOND COOLDOWN APPLIED IN INTERMEDIATE TIERS)
+                // 2. PASSIVE OUTSIDE EDGE RING WARNING TICK
                 if (distanceToCenter <= rSize && this.damageCooldown <= 0) {
                   let damageAmount = 5; 
                   let newHealth = currentHealthValue - damageAmount;
@@ -656,7 +656,7 @@
         outerBorder3.setAttribute('material', 'color: #990000; opacity: 1; transparent: false; roughness: 1; metalness: 0');
         ringWrapper.appendChild(outerBorder3);
 
-        // 🦈 SHARK GENERATION: 2 seconds after the ring wrapper spawns
+        // 🦈 SHARK GENERATION WITH ORIENTATION ADJUSTMENT
         setTimeout(() => {
           if (ringWrapper.parentNode) {
             let shark = document.createElement('a-entity');
@@ -665,6 +665,22 @@
             shark.setAttribute('position', '0 -2.5 0'); 
             shark.setAttribute('scale', '1.5 1.5 1.5'); 
             shark.setAttribute('animation-mixer', ''); 
+            
+            // Wait for the shark asset to assemble its components inside Three.js
+            shark.addEventListener('model-loaded', () => {
+              let boatVisual = document.getElementById('player-boat');
+              if (boatVisual && boatVisual.object3D && shark.object3D) {
+                let boatWorldPosition = new THREE.Vector3();
+                boatVisual.object3D.getWorldPosition(boatWorldPosition);
+                
+                // Track matching height relative to local wrapper position
+                let alignmentTarget = new THREE.Vector3(boatWorldPosition.x, shark.object3D.position.y, boatWorldPosition.z);
+                
+                // Turn the shark structure towards the target vector tracking point
+                shark.object3D.lookAt(alignmentTarget);
+              }
+            });
+
             ringWrapper.appendChild(shark);
           }
         }, 2000);
