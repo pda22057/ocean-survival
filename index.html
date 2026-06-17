@@ -185,7 +185,7 @@
     <div id="game-over-text">GAME OVER</div>
   </div>
 
-  <a-scene id="scene" ring-spawner="playerRig: #rig; enabled: false" bottle-spawner="playerRig: #rig; enabled: false">
+  <a-scene id="scene" ring-spawner="playerRig: #rig; enabled: false; minSpawnRadius: 30; maxSpawnRadius: 80" bottle-spawner="playerRig: #rig; enabled: false">
     
     <a-assets>
       <audio id="ambient-sea" 
