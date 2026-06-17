@@ -515,6 +515,10 @@
         this.timer = 0;
         this.nextSpawnTime = this.getNewSpawnTime();
         this.damageCooldown = 0; 
+        
+        // Reusable vectors for clean, non-garbage collecting math checks
+        this.playerWorldPos = new THREE.Vector3();
+        this.sharkWorldPos = new THREE.Vector3();
       },
       getNewSpawnTime: function () {
         return Math.random() * (this.data.spawnMaxTime - this.data.spawnMinTime) + this.data.spawnMinTime;
@@ -536,28 +540,45 @@
             this.damageCooldown -= timeDelta;
           }
 
+          // 1. DIRECT SHARK WORLD-SPACE COLLISION DETECTOR (INSTANT GAME OVER)
+          let sharkEntities = document.querySelectorAll('.shark');
+          let boatVisual = document.getElementById('player-boat');
+          
+          if (boatVisual && boatVisual.object3D) {
+            boatVisual.object3D.getWorldPosition(this.playerWorldPos);
+            
+            for (let s = 0; s < sharkEntities.length; s++) {
+              let sharkObj = sharkEntities[s].object3D;
+              if (sharkObj) {
+                sharkObj.getWorldPosition(this.sharkWorldPos);
+                
+                // Calculate actual distance in standard horizontal plane (X and Z)
+                let dx = this.playerWorldPos.x - this.sharkWorldPos.x;
+                let dz = this.playerWorldPos.z - this.sharkWorldPos.z;
+                let exactHorizontalDistance = Math.sqrt(dx * dx + dz * dz);
+
+                // If shark touches the physical bounds of the boat
+                if (exactHorizontalDistance <= 4.5) {
+                  updateHealthBarDisplay(0);
+                  triggerGameOver();
+                  return; // Stop running any further tick updates immediately
+                }
+              }
+            }
+          }
+
+          // 2. PASSIVE RED RING ENVIRONMENTAL DAMAGE (DEALS OVER TIME IN RADIUS)
           let playerPos = this.data.playerRig.object3D.position;
           let rSize = this.data.ringRadius;
 
           for (let i = 0; i < this.activeRings.length; i++) {
             let activeRing = this.activeRings[i];
             let ringPos = activeRing.object3D.position;
-            let dx = playerPos.x - ringPos.x;
-            let dz = playerPos.z - ringPos.z;
-            let distance = Math.sqrt(dx * dx + dz * dz);
+            let rdx = playerPos.x - ringPos.x;
+            let rdz = playerPos.z - ringPos.z;
+            let distanceToRing = Math.sqrt(rdx * rdx + rdz * rdz);
 
-            // 1. Instant Shark Collision Logic (Overwrites passive environment ticks)
-            if (activeRing.sharkSpawned) {
-              let directSharkCollisionRadius = 3.8; 
-              if (distance <= directSharkCollisionRadius) {
-                updateHealthBarDisplay(0);
-                triggerGameOver();
-                break;
-              }
-            }
-
-            // 2. Existing Ring-Bound Damage Logic (Over time within circle)
-            if (distance <= rSize && this.damageCooldown <= 0) {
+            if (distanceToRing <= rSize && this.damageCooldown <= 0) {
               let damageAmount = 5; 
               let newHealth = currentHealthValue - damageAmount;
               
@@ -610,7 +631,6 @@
 
         let ringWrapper = document.createElement('a-entity');
         ringWrapper.setAttribute('position', `${spawnX} 0 ${spawnZ}`);
-        ringWrapper.sharkSpawned = false; 
         ringWrapper.setAttribute('wave-rider', {
           amplitude: 0.02,
           speed: 1.0,
@@ -654,11 +674,11 @@
           if (ringWrapper.parentNode) {
             let shark = document.createElement('a-entity');
             shark.setAttribute('gltf-model', '#shark-model');
+            shark.setAttribute('class', 'shark'); // Fixed target hook class for collision checks
             shark.setAttribute('position', '0 -2.5 0'); 
             shark.setAttribute('scale', '1.5 1.5 1.5'); 
             shark.setAttribute('animation-mixer', ''); 
             ringWrapper.appendChild(shark);
-            ringWrapper.sharkSpawned = true; 
           }
         }, 2000);
 
