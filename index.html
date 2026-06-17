@@ -467,8 +467,7 @@
         this.el.appendChild(bottle);
         this.activeBottles.push(bottle);
 
-        // 🎲 ΤΥΧΑΙΟΤΗΤΑ: Υπολογισμός τυχαίας διάρκειας ζωής από 7 έως 15 δευτερόλεπτα
-        let randomLifespan = Math.random() * (15000 - 7000) + 7000;
+        let randomLifespan = Math.random() * (25000 - 12000) + 12000;
 
         let self = this;
         bottle.expiryTimeout = setTimeout(function() {
