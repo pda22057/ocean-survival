@@ -413,8 +413,8 @@
         playerRig: { type: 'selector' },
         enabled: { default: false },
         maxBottles: { default: 7 },
-        bottleLifespan: { default: 10000 }, // 10 seconds to live
-        spawnDelay: { default: 3000 },      // 3 seconds delay between replacements
+        bottleLifespan: { default: 15000 }, // 10 seconds to live
+        spawnDelay: { default: 10000 },      // 3 seconds delay between replacements
         minRadius: { default: 5 },
         maxRadius: { default: 40 }
       },
@@ -465,7 +465,7 @@
         bottle.setAttribute('gltf-model', '#bottle-model');
         // Placed close to sea surface level (Y context matching the ocean mesh flow)
         bottle.setAttribute('position', `${spawnX} 0.3 ${spawnZ}`); 
-        bottle.setAttribute('scale', '1 1 1'); 
+        bottle.setAttribute('scale', '4 4 4'); 
         
         // Minor idle float effect component on the ocean
         bottle.setAttribute('wave-rider', {
