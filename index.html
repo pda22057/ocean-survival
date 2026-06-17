@@ -217,22 +217,15 @@
 
       <a-entity id="camera"
                 camera
-                position="0 2.5 0">
+                position="0 3.5 0">
       </a-entity>
       
       <a-entity id="player-boat"
                 gltf-model="#boat-model"
-                position="0 1.5 -0.5"
+                position="0 3.2 -0.5"
                 rotation="0 180 0"
                 scale="5 5 5"
                 visible="false">
-        
-        <a-plane position="0 0.15 0" 
-                 rotation="-90 0 0" 
-                 width="1.8" 
-                 height="4.5" 
-                 material="color: #2b231d; roughness: 0.9; metalness: 0.1">
-        </a-plane>
       </a-entity>
 
     </a-entity>
@@ -553,7 +546,7 @@
             let dz = playerPos.z - ringPos.z;
             let distance = Math.sqrt(dx * dx + dz * dz);
 
-            // 1. Ring-Bound Threat Damage Logic
+            // 1. Existing Ring-Bound Damage Logic (Over time within circle)
             if (distance <= rSize && this.damageCooldown <= 0) {
               let damageAmount = 5; 
               let newHealth = currentHealthValue - damageAmount;
@@ -568,9 +561,10 @@
               break; 
             }
 
-            // 2. Direct Under-Water Shark Collision Logic (Instant Game Over)
+            // 2. Direct Shark Collision Logic (Instant Game Over)
             if (activeRing.sharkSpawned) {
-              let directSharkCollisionRadius = 4.5; // Adjusted to match structural layout scale bounds
+              // Using 4.5 tracking window coordinates perfectly mapped to the baseline rig wrapper.
+              let directSharkCollisionRadius = 4.5; 
               if (distance <= directSharkCollisionRadius) {
                 triggerGameOver();
                 break;
@@ -616,7 +610,7 @@
 
         let ringWrapper = document.createElement('a-entity');
         ringWrapper.setAttribute('position', `${spawnX} 0 ${spawnZ}`);
-        ringWrapper.sharkSpawned = false; 
+        ringWrapper.sharkSpawned = false; // Custom state flag tracking live shark presence
         ringWrapper.setAttribute('wave-rider', {
           amplitude: 0.02,
           speed: 1.0,
@@ -628,7 +622,7 @@
         innerFill.setAttribute('radius-inner', '0');
         innerFill.setAttribute('radius-outer', rSize);
         innerFill.setAttribute('rotation', '-90 0 0');
-        innerFill.setAttribute('material', 'color: #ff0000; opacity: 0.15; transparent: true; roughness: 1; metalness: 0');
+        innerFill.setAttribute('material', 'color: #ff0000; opacity: 0.3; transparent: true; roughness: 1; metalness: 0');
         ringWrapper.appendChild(innerFill);
 
         let outerBorder1 = document.createElement('a-ring');
@@ -639,17 +633,32 @@
         outerBorder1.setAttribute('material', 'color: #ff0000; opacity: 1; transparent: false; roughness: 1; metalness: 0');
         ringWrapper.appendChild(outerBorder1);
 
-        // 🦈 REVISED SHARK SPAWN DEPTH
-        // Shifted from -2.5 up to -1.25 so it structurally sweeps and interacts right up against the hull bottom!
+        let outerBorder2 = document.createElement('a-ring');
+        outerBorder2.setAttribute('radius-inner', (rSize * 0.66) - 0.4); 
+        outerBorder2.setAttribute('radius-outer', rSize * 0.66);
+        outerBorder2.setAttribute('rotation', '-90 0 0');
+        outerBorder2.setAttribute('position', '0 0.011 0'); 
+        outerBorder2.setAttribute('material', 'color: #cc0000; opacity: 1; transparent: false; roughness: 1; metalness: 0');
+        ringWrapper.appendChild(outerBorder2);
+
+        let outerBorder3 = document.createElement('a-ring');
+        outerBorder3.setAttribute('radius-inner', (rSize * 0.33) - 0.4); 
+        outerBorder3.setAttribute('radius-outer', rSize * 0.33);
+        outerBorder3.setAttribute('rotation', '-90 0 0');
+        outerBorder3.setAttribute('position', '0 0.012 0'); 
+        outerBorder3.setAttribute('material', 'color: #990000; opacity: 1; transparent: false; roughness: 1; metalness: 0');
+        ringWrapper.appendChild(outerBorder3);
+
+        // 🦈 SHARK GENERATION: 2 seconds after the ring wrapper spawns
         setTimeout(() => {
           if (ringWrapper.parentNode) {
             let shark = document.createElement('a-entity');
             shark.setAttribute('gltf-model', '#shark-model');
-            shark.setAttribute('position', '0 -1.25 0');  
+            shark.setAttribute('position', '0 -2.5 0'); 
             shark.setAttribute('scale', '1.5 1.5 1.5'); 
             shark.setAttribute('animation-mixer', ''); 
             ringWrapper.appendChild(shark);
-            ringWrapper.sharkSpawned = true; 
+            ringWrapper.sharkSpawned = true; // Turn on collision flag when the asset arrives
           }
         }, 2000);
 
