@@ -185,25 +185,42 @@
       display: none; /* Hidden by default */
       justify-content: center;
       align-items: center;
-      padding: 0 40px;
+      padding: 0 60px;
       box-sizing: border-box;
       text-align: center;
     }
 
-    /* Displays the active slide and triggers text fade animation */
+    /* Displays the active slide */
     .story-slide.active-slide {
       display: flex !important;
-      animation: textFadeIn 1.0s ease-out forwards;
     }
 
-    /* ✍️ TYPING STYLE FONT FOR STORY TEXT */
+    /* ✍️ NEW BIG, BOLD, CENTERED STYLE FOR WIN TEXT (Matches Menu UI Theme) */
     .story-text {
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 24px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 38px;
       font-weight: bold;
-      color: #1a2a3a;
-      line-height: 1.6;
-      max-width: 750px;
+      color: #01162b;
+      line-height: 1.5;
+      max-width: 950px;
+      margin: 0 auto;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    /* 🔤 LETTER FADE-IN ENGINE STYLING */
+    .letter-span {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(5px);
+      animation: letterReveal 0.4s ease-out forwards;
+    }
+
+    /* Space preservation fix for parsed letter-spans */
+    .space-span {
+      display: inline-block;
+      width: 0.28em;
     }
 
     /* 📽️ ANIMATION KEYFRAMES */
@@ -215,6 +232,13 @@
     @keyframes textFadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes letterReveal {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
   </style>
 </head>
@@ -241,23 +265,23 @@
 
   <div id="win-screen">
     <div class="story-slide" id="slide-1">
-      <p class="story-text">Congratulations, you survived.</p>
+      <p class="story-text" data-text="Congratulations, you survived."></p>
     </div>
     
     <div class="story-slide" id="slide-2">
-      <p class="story-text">After hours of being in the open ocean, rescue has finally arrived.</p>
+      <p class="story-text" data-text="After hours of being in the open ocean, rescue has finally arrived."></p>
     </div>
     
     <div class="story-slide" id="slide-3">
-      <p class="story-text">The search team spotted your signal of the phone and safely saved you, bringing you inside the helicopter, where medical assistance is already waiting.</p>
+      <p class="story-text" data-text="The search team spotted your signal of the phone and safely saved you, bringing you inside the helicopter, where medical assistance is already waiting."></p>
     </div>
     
     <div class="story-slide" id="slide-4">
-      <p class="story-text">What began as a fight for survival has become a story you'll carry with you for the rest of your life.</p>
+      <p class="story-text" data-text="What began as a fight for survival has become a story you'll carry with you for the rest of your life."></p>
     </div>
 
     <div class="story-slide" id="slide-5">
-      <p class="story-text">a tale that may one day be passed on to future generations.</p>
+      <p class="story-text" data-text="a tale that may one day be passed on to future generations."></p>
     </div>
   </div>
 
@@ -491,36 +515,36 @@
       let winElement = document.getElementById('win-screen');
       if (winElement) winElement.style.display = 'flex';
 
-      // ⏱️ THE SEQUENTIAL 4-SECOND TIMEOUT CHAIN (Ensures clean slide swaps)
-      // 1.5s freeze + 2.5s fade = 4000ms until screen turns completely solid white
+      // ⏱️ THE SEQUENTIAL 6-SECOND TIMEOUT CHAIN (Ensures clean slide swaps)
+      // 1.5s freeze + 2.5s fade = 6000ms until screen turns completely solid white
       
       // Screen 1: Shows up instantly when white out finishes
       setTimeout(() => {
         showStorySlide(1);
-      }, 4000);
+      }, 6000);
 
-      // Screen 2: Swaps after 4 seconds
+      // Screen 2: Swaps after 6 seconds
       setTimeout(() => {
         showStorySlide(2);
-      }, 8000);
-
-      // Screen 3: Swaps after 4 seconds
-      setTimeout(() => {
-        showStorySlide(3);
       }, 12000);
 
-      // Screen 4: Swaps after 4 seconds
+      // Screen 3: Swaps after 6 seconds
+      setTimeout(() => {
+        showStorySlide(3);
+      }, 18000);
+
+      // Screen 4: Swaps after 6 seconds
       setTimeout(() => {
         showStorySlide(4);
-      }, 16000);
+      }, 24000);
 
-      // Screen 5: Swaps after 4 seconds
+      // Screen 5: Swaps after 6 seconds
       setTimeout(() => {
         showStorySlide(5);
-      }, 2000);
+      }, 30000);
     }
 
-    // Swaps active story page visibility classes cleanly
+    // Swaps active story page visibility classes cleanly and runs the letter animation
     function showStorySlide(slideNumber) {
       let activeSlide = document.querySelector('.story-slide.active-slide');
       if (activeSlide) {
@@ -530,6 +554,27 @@
       let targetSlide = document.getElementById(`slide-${slideNumber}`);
       if (targetSlide) {
         targetSlide.classList.add('active-slide');
+        
+        // Find text block container and target raw data string
+        let txtElement = targetSlide.querySelector('.story-text');
+        let rawPhrase = txtElement.getAttribute('data-text');
+        txtElement.innerHTML = ''; // Reset container cleanly
+
+        // Transform string characters into animated elements
+        let characterArray = rawPhrase.split('');
+        characterArray.forEach((char, idx) => {
+          let charSpan = document.createElement('span');
+          if (char === ' ') {
+            charSpan.className = 'space-span';
+            charSpan.innerHTML = '&nbsp;';
+          } else {
+            charSpan.className = 'letter-span';
+            charSpan.innerText = char;
+            // Increases delay linearly per character for a progressive letter wave fade-in
+            charSpan.style.animationDelay = `${idx * 25}ms`;
+          }
+          txtElement.appendChild(charSpan);
+        });
       }
     }
 
@@ -629,8 +674,7 @@
         bottle.setAttribute('wave-rider', {
           amplitude: 0.05,
           speed: 1.5,
-          eyeHeight: 0.3,
-          maxCeiling: 0.5
+          eyeHeight: 0.3,maxCeiling: 0.5
         });
 
         this.el.appendChild(bottle);
