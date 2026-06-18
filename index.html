@@ -263,28 +263,28 @@
     <div id="game-over-text">GAME OVER</div>
   </div>
 
-  <div id="win-screen">
-    <div class="story-slide" id="slide-1">
-      <p class="story-text" data-text="Congratulations, you survived."></p>
-    </div>
-    
-    <div class="story-slide" id="slide-2">
-      <p class="story-text" data-text="After hours of being in the open ocean, rescue has finally arrived."></p>
-    </div>
-    
-    <div class="story-slide" id="slide-3">
-      <p class="story-text" data-text="The search team spotted your signal of the phone and safely saved you, bringing you inside the helicopter, where medical assistance is already waiting."></p>
-    </div>
-    
-    <div class="story-slide" id="slide-4">
-      <p class="story-text" data-text="What began as a fight for survival has become a story you'll carry with you for the rest of your life."></p>
-    </div>
-
-    <div class="story-slide" id="slide-5">
-      <p class="story-text" data-text="a tale that may one day be passed on to future generations."></p>
-    </div>
+  <div id="win-screen" style="display: flex; opacity: 1;">
+  <div class="story-slide active-slide" id="slide-1">
+    <p class="story-text" data-text="Congratulations, you survived"></p>
+  </div>
+  
+  <div class="story-slide" id="slide-2">
+    <p class="story-text" data-text="After hours of being in the open ocean,   rescue has finally arrived"></p>
+  </div>
+  
+  <div class="story-slide" id="slide-3">
+    <p class="story-text" data-text="The search team spotted your signal of   the phone and safely saved you, bringing you inside the helicopter, where medical assistance is already waiting"></p>
+  </div>
+  
+  <div class="story-slide" id="slide-4">
+    <p class="story-text" data-text="What began as a fight for survival has   become a story you'll carry with you for the rest of your life"></p>
   </div>
 
+  <div class="story-slide" id="slide-5">
+    <p class="story-text" data-text="a tale that may one day be passed on to   future generations"></p>
+  </div>
+</div>
+  
   <a-scene id="scene" ring-spawner="playerRig: #rig; enabled: false; minSpawnRadius: 15; maxSpawnRadius: 40" bottle-spawner="playerRig: #rig; enabled: false">
     
     <a-assets>
