@@ -129,7 +129,7 @@
       transition: width 0.3s ease, background-color 0.5s ease;
     }
 
-    /* 🖤 FULL BLACK GAME OVER OVERLAY SCREEN */
+   /* 🖤 FULL BLACK GAME OVER SCREEN FOR LOSING */
     #game-over-screen {
       position: fixed;
       top: 0;
@@ -144,7 +144,24 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
-    #game-over-text {
+    /* 🚁 TRANSPARENT HUD OVERLAY FOR THE HELICOPTER WINNING ENDING */
+    #win-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0); /* Completely transparent so you see the ocean */
+      z-index: 10000;
+      display: none; 
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      pointer-events: none; /* Let's you look around with the mouse after winning */
+    }
+
+    /* 📝 TEXT STYLING FOR BOTH SCREENS */
+    #game-over-text, #win-text {
       color: #ffffff;
       font-size: 64px;
       font-weight: bold;
@@ -152,9 +169,12 @@
       text-transform: uppercase;
       text-shadow: 0px 4px 15px rgba(255, 255, 255, 0.2);
       margin-bottom: 15vh;
+      opacity: 0; /* Starts hidden for the animation below */
     }
 
-    #game-over-screen[style*="display: flex"] #game-over-text {
+    /* ✨ FADE-IN ANIMATION FOR BOTH SCREENS */
+    #game-over-screen[style*="display: flex"] #game-over-text,
+    #win-screen[style*="display: flex"] #win-text {
       animation: textFadeIn 1.5s ease-out forwards;
     }
 
@@ -185,6 +205,10 @@
     <div id="game-over-text">GAME OVER</div>
   </div>
 
+  <div id="win-screen">
+    <div id="win-text" style="color: #64dfdf;">RESCUED!</div>
+  </div>
+
   <a-scene id="scene" ring-spawner="playerRig: #rig; enabled: false; minSpawnRadius: 15; maxSpawnRadius: 40" bottle-spawner="playerRig: #rig; enabled: false">
     
     <a-assets>
@@ -194,7 +218,7 @@
              loop="true"></audio>
       <audio id="helicopter-sound" 
          src="assets/sounds/helicopter.mp3" 
-         preload="auto"></audio>
+         preload="auto"></audio> 
       <a-asset-item id="boat-model" src="assets/models/fishing_boat.glb"></a-asset-item>
       <a-asset-item id="bottle-model" src="assets/models/water_canteen_-_pbr_game_ready_asset.glb"></a-asset-item>
       <a-asset-item id="shark-model" src="assets/models/swimming_shark.glb"></a-asset-item>
@@ -316,29 +340,24 @@
     });
 
     function startSurvivalClock() {
-  clockInterval = setInterval(() => {
-    gameMinutes += 15;
-    if (gameMinutes >= 60) {
-      gameMinutes = 0;
-      gameHours += 1;
-    }
-    
-    let displayHours = gameHours.toString().padStart(2, '0');
-    let displayMinutes = gameMinutes.toString().padStart(2, '0');
-    let hudElement = document.getElementById('survival-hud');
-    if (hudElement) hudElement.innerText = `TIME: ${displayHours}:${displayMinutes} AM`;
+      clockInterval = setInterval(() => {
+        gameMinutes += 15;
+        if (gameMinutes >= 60) {
+          gameMinutes = 0;
+          gameHours += 1;
+        }
+        let displayHours = gameHours.toString().padStart(2, '0');
+        let displayMinutes = gameMinutes.toString().padStart(2, '0');
+        let hudElement = document.getElementById('survival-hud');
+        if (hudElement) hudElement.innerText = `TIME: ${displayHours}:${displayMinutes} AM`;
 
-    // 👇 NEW WIN/STOP CONDITION AT 7:00 AM
-    if (gameHours === 7 && gameMinutes === 0) {
-      // Option A: Trigger a win screen if you want to reward them
-      let textElement = document.getElementById('game-over-text');
-      if (textElement) textElement.innerText = "YOU SURVIVED!"; 
-      
-      triggerGameOver(); 
+        // 🏆 WIN CONDITION REACHED AT 7:00 AM
+        if (gameHours === 7 && gameMinutes === 0) {
+          triggerWin();
+        }
+      }, 30000); 
     }
 
-  }, 30000); // Keeps the game speed exactly the same (every 30 seconds = 15 game minutes)
-}
     function startSurvivalDrainSystems() {
       hydrationDrainInterval = setInterval(() => {
         let newHydrationTotal = currentHydrationValue - 10;
@@ -350,7 +369,7 @@
           if (newHealthTotal <= 0) {
             newHealthTotal = 0;
             updateHealthBarDisplay(newHealthTotal);
-            triggerGameOver();
+            triggerLoss(); // 💀 Trigger the standard black game over screen
           } else {
             updateHealthBarDisplay(newHealthTotal);
           }
@@ -360,15 +379,18 @@
       }, 10000);
     }
 
-    function triggerGameOver() {
+    // 💀 LOSING ENDING (Pitch black screen)
+    function triggerLoss() {
       clearInterval(hydrationDrainInterval);
       clearInterval(clockInterval);
       healthSystemActive = false;
+      
       let scene = document.getElementById('scene');
       if (scene) {
         scene.setAttribute('ring-spawner', 'enabled: false');
         scene.setAttribute('bottle-spawner', 'enabled: false');
       }
+      
       let screenElement = document.getElementById('game-over-screen');
       if (screenElement) screenElement.style.display = 'flex';
       
@@ -376,6 +398,47 @@
       if (rig) rig.setAttribute('wasd-controls', 'enabled: false');
     }
 
+    // 🚁 WINNING ENDING (Helicopter rescue, ocean stays visible, threats disappear)
+    function triggerWin() {
+      clearInterval(hydrationDrainInterval);
+      clearInterval(clockInterval);
+      healthSystemActive = false;
+      
+      let scene = document.getElementById('scene');
+      if (scene) {
+        scene.setAttribute('ring-spawner', 'enabled: false');
+        scene.setAttribute('bottle-spawner', 'enabled: false');
+        
+        // Wipe all remaining water bottles off the map
+        let existingBottles = scene.querySelectorAll('[gltf-model="#bottle-model"]');
+        existingBottles.forEach(bottle => {
+          if (bottle.parentNode) bottle.parentNode.removeChild(bottle);
+        });
+
+        // Wipe all dangerous rings and sharks off the map
+        let existingRings = scene.querySelectorAll('a-entity[wave-rider]');
+        existingRings.forEach(ring => {
+          if (ring.id !== 'rig') {
+            if (ring.parentNode) ring.parentNode.removeChild(ring);
+          }
+        });
+      }
+
+      // Lock down the player's boat movement
+      let rig = document.getElementById('rig');
+      if (rig) rig.setAttribute('wasd-controls', 'enabled: false');
+
+      // Play the rescue helicopter audio file
+      let helicopterAudio = document.getElementById('helicopter-sound');
+      if (helicopterAudio) {
+        helicopterAudio.volume = 0.9;
+        helicopterAudio.play().catch(err => console.log("Audio waiting for player interaction:", err));
+      }
+      
+      // Show transparent "RESCUED!" text overlay
+      let winElement = document.getElementById('win-screen');
+      if (winElement) winElement.style.display = 'flex';
+    }
     function collectWaterBottle() {
       let restoredHydrationTotal = Math.min(100, currentHydrationValue + 5);
       updateHydrationBarDisplay(restoredHydrationTotal);
@@ -576,7 +639,7 @@
                 // 1. PHYSICAL CONTACT WITH SHARK ZONE TRIGGER
                 if (distanceToShark <= physicalHitRadius) {
                   updateHealthBarDisplay(0);
-                  triggerGameOver();
+                  triggerLoss(); // 💀 Updates to trigger the black screen
                   return; 
                 }
 
@@ -587,7 +650,7 @@
                   
                   if (newHealth <= 0) {
                     updateHealthBarDisplay(0);
-                    triggerGameOver();
+                    triggerLoss(); // 💀 Updates to trigger the black screen
                   } else {
                     updateHealthBarDisplay(newHealth);
                   }
