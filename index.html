@@ -313,19 +313,29 @@
     });
 
     function startSurvivalClock() {
-      clockInterval = setInterval(() => {
-        gameMinutes += 15;
-        if (gameMinutes >= 60) {
-          gameMinutes = 0;
-          gameHours += 1;
-        }
-        let displayHours = gameHours.toString().padStart(2, '0');
-        let displayMinutes = gameMinutes.toString().padStart(2, '0');
-        let hudElement = document.getElementById('survival-hud');
-        if (hudElement) hudElement.innerText = `TIME: ${displayHours}:${displayMinutes} AM`;
-      }, 30000); 
+  clockInterval = setInterval(() => {
+    gameMinutes += 15;
+    if (gameMinutes >= 60) {
+      gameMinutes = 0;
+      gameHours += 1;
+    }
+    
+    let displayHours = gameHours.toString().padStart(2, '0');
+    let displayMinutes = gameMinutes.toString().padStart(2, '0');
+    let hudElement = document.getElementById('survival-hud');
+    if (hudElement) hudElement.innerText = `TIME: ${displayHours}:${displayMinutes} AM`;
+
+    // 👇 NEW WIN/STOP CONDITION AT 7:00 AM
+    if (gameHours === 7 && gameMinutes === 0) {
+      // Option A: Trigger a win screen if you want to reward them
+      let textElement = document.getElementById('game-over-text');
+      if (textElement) textElement.innerText = "YOU SURVIVED!"; 
+      
+      triggerGameOver(); 
     }
 
+  }, 30000); // Keeps the game speed exactly the same (every 30 seconds = 15 game minutes)
+}
     function startSurvivalDrainSystems() {
       hydrationDrainInterval = setInterval(() => {
         let newHydrationTotal = currentHydrationValue - 10;
