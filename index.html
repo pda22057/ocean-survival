@@ -129,7 +129,7 @@
       transition: width 0.3s ease, background-color 0.5s ease;
     }
 
-   /* 🖤 FULL BLACK GAME OVER SCREEN FOR LOSING */
+    /* 🖤 FULL BLACK GAME OVER SCREEN FOR LOSING */
     #game-over-screen {
       position: fixed;
       top: 0;
@@ -142,6 +142,15 @@
       justify-content: center;
       align-items: center;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    #game-over-text {
+      color: #ffffff;
+      font-size: 64px;
+      font-weight: bold;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      text-shadow: 0px 4px 15px rgba(255, 255, 255, 0.2);
     }
 
     #game-over-screen[style*="display: flex"] {
@@ -158,8 +167,6 @@
       background-color: #ffffff;
       z-index: 10000;
       display: none; 
-      justify-content: center; /* Horizontally centers the text */
-      align-items: center;     /* Vertically centers the text */
       opacity: 0;
     }
 
@@ -168,50 +175,46 @@
       animation: spotlightFadeIn 2.5s ease-in 1.5s forwards; 
     }
 
-    /* 📖 THE STORY CONTAINER */
-    #story-container {
-      max-width: 650px;       /* Keeps the story text neatly wrapped */
-      padding: 0 20px;
+    /* 📄 INDIVIDUAL FULL-SCREEN STORY SLIDES */
+    .story-slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none; /* Hidden by default */
+      justify-content: center;
+      align-items: center;
+      padding: 0 40px;
+      box-sizing: border-box;
       text-align: center;
     }
 
-    /* ✍️ TYPING TRANSITION STYLING */
-    #story-text {
-      font-family: 'Courier New', Courier, monospace; /* Classic typewriter font */
+    /* Displays the active slide and triggers text fade animation */
+    .story-slide.active-slide {
+      display: flex;
+      animation: textFadeIn 1.0s ease-out forwards;
+    }
+
+    /* ✍️ TYPING STYLE FONT FOR STORY TEXT */
+    .story-text {
+      font-family: 'Courier New', Courier, monospace;
       font-size: 24px;
       font-weight: bold;
-      color: #1a2a3a;        /* Elegant dark slate color against the white background */
+      color: #1a2a3a;
       line-height: 1.6;
-      white-space: normal;
-      overflow: hidden;
-      opacity: 0;            /* Starts completely invisible */
+      max-width: 750px;
     }
 
-    /* ✨ TRIGGER THE TYPING TRIGGER WHEN GAME IS WON */
-    #win-screen[style*="display: flex"] #story-text {
-      /* 
-         Takes 4 seconds to fade/type text in. 
-         Has a 4.5s delay total (1.5s freeze + 2.5s whiteout fade + 0.5s padding room) 
-         so it waits for the screen to be fully white!
-      */
-      animation: storyFadeIn 4.0s ease-out 4.5s forwards;
-    }
-
-    /* 📽️ KEYFRAMES */
+    /* 📽️ ANIMATION KEYFRAMES */
     @keyframes spotlightFadeIn {
       from { opacity: 0; }
       to { opacity: 1; }
     }
 
-    @keyframes storyFadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px); /* Subtle rise up as it reveals */
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    @keyframes textFadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
@@ -237,13 +240,20 @@
   </div>
 
   <div id="win-screen">
-    <!-- The typing story container -->
-    <div id="story-container">
-     <p class="story-part part-1">Congratulations, you survived</p>
-     <p class="story-part part-2">After hours of being in the open ocean, rescue has finally arrived</p>
-     <p class="story-part part-3">The search team spotted your signal of the phone and safely saved you, bringing you inside the helicopter, where medical assistance is already waiting</p>
-     <p class="story-part part-4">What began as a fight for survival has become a story you'll carry with you for the rest of your life</p>
-     <p class="story-part part-5">a tale that may one day be passed on to future generations</p>
+    <div class="story-slide" id="slide-1">
+      <p class="story-text">Congratulations, you survived.</p>
+    </div>
+    
+    <div class="story-slide" id="slide-2">
+      <p class="story-text">After hours of being in the open ocean, rescue has finally arrived.</p>
+    </div>
+    
+    <div class="story-slide" id="slide-3">
+      <p class="story-text">The search team spotted your signal of the phone and safely saved you, bringing you inside the helicopter, where medical assistance is already waiting.</p>
+    </div>
+    
+    <div class="story-slide" id="slide-4">
+      <p class="story-text">What began as a fight for survival has become a story you'll carry with you for the rest of your life... a tale that may one day be passed on to future generations.</p>
     </div>
   </div>
 
@@ -436,7 +446,7 @@
       if (rig) rig.setAttribute('wasd-controls', 'enabled: false');
     }
 
-    // 🚁 WINNING ENDING (Helicopter rescue, ocean stays visible, threats disappear)
+    // 🚁 WINNING ENDING (Helicopter rescue, screen turns white, story loops dynamically)
     function triggerWin() {
       clearInterval(hydrationDrainInterval);
       clearInterval(clockInterval);
@@ -473,10 +483,47 @@
         helicopterAudio.play().catch(err => console.log("Audio waiting for player interaction:", err));
       }
       
-      // Show transparent "RESCUED!" text overlay
+      // Show screen overlay, triggering the delayed 2.5s white flash animation
       let winElement = document.getElementById('win-screen');
       if (winElement) winElement.style.display = 'flex';
+
+      // ⏱️ TIMED MULTI-SCREEN SYSTEM (4 seconds per page)
+      // Calculation: 1.5s freeze + 2.5s fade = 4000ms until screen turns completely solid white
+      
+      // Show Slide 1 once fully white out
+      setTimeout(() => {
+        showStorySlide(1);
+      }, 4000);
+
+      // Show Slide 2 after 4 seconds
+      setTimeout(() => {
+        showStorySlide(2);
+      }, 8000);
+
+      // Show Slide 3 after another 4 seconds
+      setTimeout(() => {
+        showStorySlide(3);
+      }, 12000);
+
+      // Show Slide 4 after another 4 seconds
+      setTimeout(() => {
+        showStorySlide(4);
+      }, 16000);
     }
+
+    // Swaps active story page visibility classes cleanly
+    function showStorySlide(slideNumber) {
+      let activeSlide = document.querySelector('.story-slide.active-slide');
+      if (activeSlide) {
+        activeSlide.classList.remove('active-slide');
+      }
+
+      let targetSlide = document.getElementById(`slide-${slideNumber}`);
+      if (targetSlide) {
+        targetSlide.classList.add('active-slide');
+      }
+    }
+
     function collectWaterBottle() {
       let restoredHydrationTotal = Math.min(100, currentHydrationValue + 5);
       updateHydrationBarDisplay(restoredHydrationTotal);
@@ -655,19 +702,16 @@
 
           let boatVisual = document.getElementById('player-boat');
           if (boatVisual && boatVisual.object3D) {
-            // Track actual visual boat center coordinates in the world
             boatVisual.object3D.getWorldPosition(this.playerWorldPos);
             
             let rSize = this.data.ringRadius;
-            let physicalHitRadius = 3.5; // Distance threshold to trigger game over/damage from shark model
+            let physicalHitRadius = 3.5; 
 
             for (let i = 0; i < this.activeRings.length; i++) {
               let activeRing = this.activeRings[i];
-              // Search inside the ring wrapper for the spawned shark entity
               let sharkEntity = activeRing.querySelector('.shark');
               
               if (sharkEntity && sharkEntity.object3D) {
-                // Track actual 3D coordinates of the physical shark model
                 sharkEntity.object3D.getWorldPosition(this.sharkWorldPos);
                 
                 let dx = this.playerWorldPos.x - this.sharkWorldPos.x;
@@ -677,7 +721,7 @@
                 // 1. PHYSICAL CONTACT WITH SHARK ZONE TRIGGER
                 if (distanceToShark <= physicalHitRadius) {
                   updateHealthBarDisplay(0);
-                  triggerLoss(); // 💀 Updates to trigger the black screen
+                  triggerLoss(); 
                   return; 
                 }
 
@@ -688,7 +732,7 @@
                   
                   if (newHealth <= 0) {
                     updateHealthBarDisplay(0);
-                    triggerLoss(); // 💀 Updates to trigger the black screen
+                    triggerLoss(); 
                   } else {
                     updateHealthBarDisplay(newHealth);
                   }
@@ -775,7 +819,6 @@
         outerBorder3.setAttribute('material', 'color: #990000; opacity: 1; transparent: false; roughness: 1; metalness: 0');
         ringWrapper.appendChild(outerBorder3);
 
-        // 🦈 PRECISION TRIGGER SHARK GENERATION
         setTimeout(() => {
           if (ringWrapper.parentNode) {
             let shark = document.createElement('a-entity');
@@ -798,11 +841,8 @@
                 let dz = boatWorldPosition.z - sharkWorldPosition.z;
 
                 let angleToPlayer = Math.atan2(dx, dz);
-
-                // Adjusted tracking rotation math offset
                 let modelOffset = Math.PI / 4; 
                 
-                // Assign rotation cleanly on the Y axis
                 shark.object3D.rotation.set(0, angleToPlayer + modelOffset, 0);
               }
             });
