@@ -144,36 +144,74 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
-    /* 🚁 TRANSPARENT HUD OVERLAY FOR THE HELICOPTER WINNING ENDING */
+    #game-over-screen[style*="display: flex"] {
+      animation: textFadeIn 1.5s ease-out forwards;
+    }
+
+    /* 🚁 WHITE SCREEN OVERLAY FOR WINNING */
     #win-screen {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: #ffffff; /* Completely transparent so you see the ocean */
+      background-color: #ffffff;
       z-index: 10000;
       display: none; 
-      pointer-events: none; /* Let's you look around with the mouse after winning */
+      justify-content: center; /* Horizontally centers the text */
+      align-items: center;     /* Vertically centers the text */
       opacity: 0;
     }
 
-    #game-over-screen[style*="display: flex"] {
-      animation: textFadeIn 1.5s ease-out forwards;
-    }
-
-    /* ✨ 2.5 SECOND FADE-IN ANIMATION FOR THE SPOTLIGHT */
+    /* 🎬 WHITE FADE ANIMATION (Takes 2.5s, starts after 1.5s freeze) */
     #win-screen[style*="display: flex"] {
-      animation: spotlightFadeIn 2.5s ease-in 2.5s forwards;
+      animation: spotlightFadeIn 2.5s ease-in 1.5s forwards; 
     }
 
-    @keyframes textFadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+    /* 📖 THE STORY CONTAINER */
+    #story-container {
+      max-width: 650px;       /* Keeps the story text neatly wrapped */
+      padding: 0 20px;
+      text-align: center;
     }
+
+    /* ✍️ TYPING TRANSITION STYLING */
+    #story-text {
+      font-family: 'Courier New', Courier, monospace; /* Classic typewriter font */
+      font-size: 24px;
+      font-weight: bold;
+      color: #1a2a3a;        /* Elegant dark slate color against the white background */
+      line-height: 1.6;
+      white-space: normal;
+      overflow: hidden;
+      opacity: 0;            /* Starts completely invisible */
+    }
+
+    /* ✨ TRIGGER THE TYPING TRIGGER WHEN GAME IS WON */
+    #win-screen[style*="display: flex"] #story-text {
+      /* 
+         Takes 4 seconds to fade/type text in. 
+         Has a 4.5s delay total (1.5s freeze + 2.5s whiteout fade + 0.5s padding room) 
+         so it waits for the screen to be fully white!
+      */
+      animation: storyFadeIn 4.0s ease-out 4.5s forwards;
+    }
+
+    /* 📽️ KEYFRAMES */
     @keyframes spotlightFadeIn {
       from { opacity: 0; }
       to { opacity: 1; }
+    }
+
+    @keyframes storyFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px); /* Subtle rise up as it reveals */
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
   </style>
 </head>
@@ -199,7 +237,12 @@
   </div>
 
   <div id="win-screen">
-    <div id="win-text" style="color: #64dfdf;">RESCUED!</div>
+    <!-- The typing story container -->
+    <div id="story-container">
+      <p id="story-text">
+        You survived! The rescue team found you and saved you. Your temperature is low and you are shivering from cold and fear. The team is next to you taking care of you.
+      </p>
+    </div>
   </div>
 
   <a-scene id="scene" ring-spawner="playerRig: #rig; enabled: false; minSpawnRadius: 15; maxSpawnRadius: 40" bottle-spawner="playerRig: #rig; enabled: false">
