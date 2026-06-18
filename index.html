@@ -192,7 +192,7 @@
 
     /* Displays the active slide and triggers text fade animation */
     .story-slide.active-slide {
-      display: flex;
+      display: flex !important;
       animation: textFadeIn 1.0s ease-out forwards;
     }
 
@@ -253,7 +253,11 @@
     </div>
     
     <div class="story-slide" id="slide-4">
-      <p class="story-text">What began as a fight for survival has become a story you'll carry with you for the rest of your life... a tale that may one day be passed on to future generations.</p>
+      <p class="story-text">What began as a fight for survival has become a story you'll carry with you for the rest of your life.</p>
+    </div>
+
+    <div class="story-slide" id="slide-5">
+      <p class="story-text">a tale that may one day be passed on to future generations.</p>
     </div>
   </div>
 
@@ -487,28 +491,33 @@
       let winElement = document.getElementById('win-screen');
       if (winElement) winElement.style.display = 'flex';
 
-      // ⏱️ TIMED MULTI-SCREEN SYSTEM (4 seconds per page)
-      // Calculation: 1.5s freeze + 2.5s fade = 4000ms until screen turns completely solid white
+      // ⏱️ THE SEQUENTIAL 4-SECOND TIMEOUT CHAIN (Ensures clean slide swaps)
+      // 1.5s freeze + 2.5s fade = 4000ms until screen turns completely solid white
       
-      // Show Slide 1 once fully white out
+      // Screen 1: Shows up instantly when white out finishes
       setTimeout(() => {
         showStorySlide(1);
       }, 4000);
 
-      // Show Slide 2 after 4 seconds
+      // Screen 2: Swaps after 4 seconds
       setTimeout(() => {
         showStorySlide(2);
       }, 8000);
 
-      // Show Slide 3 after another 4 seconds
+      // Screen 3: Swaps after 4 seconds
       setTimeout(() => {
         showStorySlide(3);
       }, 12000);
 
-      // Show Slide 4 after another 4 seconds
+      // Screen 4: Swaps after 4 seconds
       setTimeout(() => {
         showStorySlide(4);
       }, 16000);
+
+      // Screen 5: Swaps after 4 seconds
+      setTimeout(() => {
+        showStorySlide(5);
+      }, 2000);
     }
 
     // Swaps active story page visibility classes cleanly
