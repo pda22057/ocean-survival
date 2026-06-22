@@ -288,17 +288,20 @@
   <a-scene id="scene" ring-spawner="playerRig: #rig; enabled: false; minSpawnRadius: 15; maxSpawnRadius: 40" bottle-spawner="playerRig: #rig; enabled: false">
     
     <a-assets>
-      <audio id="ambient-sea" 
-             src="assets/models/ocean_survival2.mp3" 
-             preload="auto" 
-             loop="true"></audio>
-      <audio id="helicopter-sound" 
+  <audio id="ambient-sea" 
+         src="assets/models/ocean_survival2.mp3" 
+         preload="auto" 
+         loop="true"
+         autoplay="false"></audio>
+  <audio id="helicopter-sound" 
          src="assets/models/helicopter.mp3" 
-         preload="auto"></audio> 
-      <a-asset-item id="boat-model" src="assets/models/fishing_boat.glb"></a-asset-item>
-      <a-asset-item id="bottle-model" src="assets/models/water_canteen_-_pbr_game_ready_asset.glb"></a-asset-item>
-      <a-asset-item id="shark-model" src="assets/models/swimming_shark.glb"></a-asset-item>
-    </a-assets>
+         preload="auto"
+         autoplay="false"></audio> 
+  
+  <a-asset-item id="boat-model" src="assets/models/fishing_boat.glb"></a-asset-item>
+  <a-asset-item id="bottle-model" src="assets/models/water_canteen_-_pbr_game_ready_asset.glb"></a-asset-item>
+  <a-asset-item id="shark-model" src="assets/models/swimming_shark.glb"></a-asset-item>
+</a-assets>
 
     <a-entity environment="
       preset: dream; 
@@ -356,7 +359,7 @@
                 height="50"
                 material="color: #29547d; roughness: 1; metalness: 0; side: double">
     </a-cylinder>
-
+    <a-entity id="helicopter-audio-container" sound="src: #helicopter-sound; autoplay: false; loop: false; volume: 0.9"></a-entity>
   </a-scene>
 
   <script>
@@ -504,12 +507,11 @@
       let rig = document.getElementById('rig');
       if (rig) rig.setAttribute('wasd-controls', 'enabled: false');
 
-      // Play the rescue helicopter audio file
-      let helicopterAudio = document.getElementById('helicopter-sound');
-      if (helicopterAudio) {
-        helicopterAudio.volume = 0.9;
-        helicopterAudio.play().catch(err => console.log("Audio waiting for player interaction:", err));
-      }
+      // Find our clean, isolated audio container instead of the raw asset
+let helicopterEntity = document.getElementById('helicopter-audio-container');
+if (helicopterEntity && helicopterEntity.components.sound) {
+  helicopterEntity.components.sound.playSound();
+}
       
       // Show screen overlay, triggering the delayed 2.5s white flash animation
       let winElement = document.getElementById('win-screen');
