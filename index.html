@@ -170,7 +170,7 @@
       opacity: 0;
     }
 
-    /* 🎬 WHITE FADE ANIMATION */
+    /* 🎬 WHITE FADE ANIMATION (Takes 2.5s, starts after 1.5s freeze) */
     #win-screen[style*="display: flex"] {
       animation: spotlightFadeIn 2.5s ease-in 1.5s forwards; 
     }
@@ -182,7 +182,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      display: none;
+      display: none; /* Hidden by default */
       justify-content: center;
       align-items: center;
       padding: 0 60px;
@@ -195,7 +195,7 @@
       display: flex !important;
     }
 
-    /* ✍️ NEW BIG, BOLD, CENTERED STYLE FOR WIN TEXT */
+    /* ✍️ NEW BIG, BOLD, CENTERED STYLE FOR WIN TEXT (Matches Menu UI Theme) */
     .story-text {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       font-size: 38px;
@@ -217,7 +217,7 @@
       animation: letterReveal 0.4s ease-out forwards;
     }
 
-    /* Space preservation fix */
+    /* Space preservation fix for parsed letter-spans */
     .space-span {
       display: inline-block;
       width: 0.28em;
@@ -260,7 +260,7 @@
   </div>
 
   <div id="game-over-screen">
-    <div id="game-over-text">GAME OVER</div>
+    <div id="game-over-text">GAME OVER                                             sharks attacked you</div>
   </div>
 
   <div id="win-screen">
@@ -289,15 +289,15 @@
     
     <a-assets>
       <audio id="ambient-sea" 
-             src="https://pda22057.github.io/ocean-survival/assets/models/ocean_survival2.mp3" 
+             src="assets/models/ocean_survival2.mp3" 
              preload="auto" 
              loop="true"></audio>
       <audio id="helicopter-sound" 
-             src="https://pda22057.github.io/ocean-survival/assets/models/helicopter.mp3" 
-             preload="auto"></audio> 
-      <a-asset-item id="boat-model" src="https://pda22057.github.io/ocean-survival/assets/models/fishing_boat.glb"></a-asset-item>
-      <a-asset-item id="bottle-model" src="https://pda22057.github.io/ocean-survival/assets/models/water_canteen_-_pbr_game_ready_asset.glb"></a-asset-item>
-      <a-asset-item id="shark-model" src="https://pda22057.github.io/ocean-survival/assets/models/swimming_shark.glb"></a-asset-item>
+         src="assets/models/helicopter.mp3" 
+         preload="auto"></audio> 
+      <a-asset-item id="boat-model" src="assets/models/fishing_boat.glb"></a-asset-item>
+      <a-asset-item id="bottle-model" src="assets/models/water_canteen_-_pbr_game_ready_asset.glb"></a-asset-item>
+      <a-asset-item id="shark-model" src="assets/models/swimming_shark.glb"></a-asset-item>
     </a-assets>
 
     <a-entity environment="
@@ -318,31 +318,9 @@
               sound="src: #ambient-sea; autoplay: false; loop: true; volume: 0.8"
               boat-leveler>
 
-      <a-entity id="camera" camera position="0 3.5 0">
-        
-        <a-entity id="vr-hud" position="0 0 -1" visible="false">
-          
-          <a-text id="vr-hud-clock" value="TIME: 05:00 AM" color="#64dfdf" font="monospace" width="1.5" align="right" position="0.55 0.35 0"></a-text>
-          
-          <a-plane id="vr-hydration-bg" color="#2a2833" width="0.45" height="0.04" position="-0.45 0.35 0">
-            <a-plane id="vr-hydration-fluid" color="#2e3085" width="0.43" height="0.026" position="0 0 0.001"></a-plane>
-          </a-plane>
-
-          <a-plane id="vr-health-bg" color="#2a2833" width="0.45" height="0.04" position="-0.45 0.28 0">
-            <a-plane id="vr-health-fluid" color="#2E8562" width="0.43" height="0.026" position="0 0 0.001"></a-plane>
-          </a-plane>
-        </a-entity>
-
-        <a-entity id="vr-game-over-screen" position="0 0 -0.5" visible="false">
-          <a-plane color="#000000" width="2" height="2" position="0 0 0"></a-plane>
-          <a-text value="GAME OVER\n\nsharks attacked you" color="#ffffff" width="1.2" align="center" position="0 0 0.01"></a-text>
-        </a-entity>
-
-        <a-entity id="vr-win-screen" position="0 0 -0.5" visible="false">
-          <a-plane id="vr-win-flash" color="#ffffff" material="opacity: 0; transparent: true" width="2" height="2" position="0 0 0"></a-plane>
-          <a-text id="vr-win-story" value="" color="#01162b" width="0.9" align="center" position="0 0 0.01" visible="false"></a-text>
-        </a-entity>
-
+      <a-entity id="camera"
+                camera
+                position="0 3.5 0">
       </a-entity>
       
       <a-entity id="player-boat"
@@ -392,27 +370,6 @@
     let currentHealthValue = 100;
     let healthSystemActive = false; 
 
-    // Array tracking the raw text string nodes to feed into the 3D VR text component during endings
-    const vrSlidesTextData = [
-      "Congratulations, you survived",
-      "After hours of being in the open ocean, rescue has finally arrived",
-      "The search team spotted your signal of the phone and safely saved you, bringing you inside the helicopter, where medical assistance is already waiting",
-      "What began as a fight for survival has become a story you'll carry with you for the rest of your life",
-      "a tale that may one day be passed on to future generations"
-    ];
-
-    // Detect inside engine if headset rendering layer triggers active status states
-    const sceneEl = document.getElementById('scene');
-    sceneEl.addEventListener('enter-vr', function () {
-       let vrHUD = document.getElementById('vr-hud');
-       // Only project HUD in 3D frame layouts if game loop has already initiated execution
-       if(healthSystemActive && vrHUD) vrHUD.setAttribute('visible', 'true');
-    });
-    sceneEl.addEventListener('exit-vr', function () {
-       let vrHUD = document.getElementById('vr-hud');
-       if(vrHUD) vrHUD.setAttribute('visible', 'false');
-    });
-
     document.getElementById('audio-button').addEventListener('click', function() {
       var rig = document.getElementById('rig');
       if (rig) {
@@ -445,12 +402,6 @@
       var healthHUD = document.getElementById('health-bar-container');
       if (healthHUD) healthHUD.style.display = 'block';
       
-      // Auto toggle visibility on active 3D dashboard layer properties if player triggers start while already inside VR headsets
-      if (sceneEl.is('vr-mode')) {
-        let vrHUD = document.getElementById('vr-hud');
-        if (vrHUD) vrHUD.setAttribute('visible', 'true');
-      }
-
       startSurvivalClock();
       startSurvivalDrainSystems();
       healthSystemActive = true;
@@ -473,13 +424,8 @@
         }
         let displayHours = gameHours.toString().padStart(2, '0');
         let displayMinutes = gameMinutes.toString().padStart(2, '0');
-        
         let hudElement = document.getElementById('survival-hud');
         if (hudElement) hudElement.innerText = `TIME: ${displayHours}:${displayMinutes} AM`;
-
-        // Update the duplicated VR 3D display clock variable
-        let vrClock = document.getElementById('vr-hud-clock');
-        if (vrClock) vrClock.setAttribute('value', `TIME: ${displayHours}:${displayMinutes} AM`);
 
         // 🏆 WIN CONDITION REACHED AT 7:00 AM
         if (gameHours === 7 && gameMinutes === 0) {
@@ -499,7 +445,7 @@
           if (newHealthTotal <= 0) {
             newHealthTotal = 0;
             updateHealthBarDisplay(newHealthTotal);
-            triggerLoss(); // 💀 Trigger game over sequences across standard layout channels
+            triggerLoss(); // 💀 Trigger the standard black game over screen
           } else {
             updateHealthBarDisplay(newHealthTotal);
           }
@@ -509,7 +455,7 @@
       }, 10000);
     }
 
-    // 💀 LOSING ENDING
+    // 💀 LOSING ENDING (Pitch black screen)
     function triggerLoss() {
       clearInterval(hydrationDrainInterval);
       clearInterval(clockInterval);
@@ -524,19 +470,11 @@
       let screenElement = document.getElementById('game-over-screen');
       if (screenElement) screenElement.style.display = 'flex';
       
-      // Hide active 3D VR dashboard
-      let vrHUD = document.getElementById('vr-hud');
-      if (vrHUD) vrHUD.setAttribute('visible', 'false');
-
-      // Project immersive VR alternative plane space layer
-      let vrLossScreen = document.getElementById('vr-game-over-screen');
-      if (vrLossScreen) vrLossScreen.setAttribute('visible', 'true');
-
       let rig = document.getElementById('rig');
       if (rig) rig.setAttribute('wasd-controls', 'enabled: false');
     }
 
-    // 🚁 WINNING ENDING
+    // 🚁 WINNING ENDING (Helicopter rescue, screen turns white, story loops dynamically)
     function triggerWin() {
       clearInterval(hydrationDrainInterval);
       clearInterval(clockInterval);
@@ -547,11 +485,13 @@
         scene.setAttribute('ring-spawner', 'enabled: false');
         scene.setAttribute('bottle-spawner', 'enabled: false');
         
+        // Wipe all remaining water bottles off the map
         let existingBottles = scene.querySelectorAll('[gltf-model="#bottle-model"]');
         existingBottles.forEach(bottle => {
           if (bottle.parentNode) bottle.parentNode.removeChild(bottle);
         });
 
+        // Wipe all dangerous rings and sharks off the map
         let existingRings = scene.querySelectorAll('a-entity[wave-rider]');
         existingRings.forEach(ring => {
           if (ring.id !== 'rig') {
@@ -560,54 +500,51 @@
         });
       }
 
+      // Lock down the player's boat movement
       let rig = document.getElementById('rig');
       if (rig) rig.setAttribute('wasd-controls', 'enabled: false');
 
+      // Play the rescue helicopter audio file
       let helicopterAudio = document.getElementById('helicopter-sound');
       if (helicopterAudio) {
         helicopterAudio.volume = 0.9;
-        helicopterAudio.play().catch(err => console.log("Audio exception:", err));
+        helicopterAudio.play().catch(err => console.log("Audio waiting for player interaction:", err));
       }
       
+      // Show screen overlay, triggering the delayed 2.5s white flash animation
       let winElement = document.getElementById('win-screen');
       if (winElement) winElement.style.display = 'flex';
 
-      // Hide active 3D VR dashboard
-      let vrHUD = document.getElementById('vr-hud');
-      if (vrHUD) vrHUD.setAttribute('visible', 'false');
-
-      // Trigger immersive 3D VR alternative spaces layer for win screens
-      let vrWinScreen = document.getElementById('vr-win-screen');
-      if (vrWinScreen) vrWinScreen.setAttribute('visible', 'true');
-
-      // Animate manual 3D flash values inside VR camera lenses to mirror CSS animations
-      let vrFlashPlane = document.getElementById('vr-win-flash');
-      let opCounter = 0;
+      // ⏱️ THE SEQUENTIAL 6-SECOND TIMEOUT CHAIN (Ensures clean slide swaps)
+      // 1.5s freeze + 2.5s fade = 6000ms until screen turns completely solid white
+      
+      // Screen 1: Shows up instantly when white out finishes
       setTimeout(() => {
-        let flashInterval = setInterval(() => {
-          opCounter += 0.02;
-          if (vrFlashPlane) vrFlashPlane.setAttribute('material', `opacity: ${opCounter}; transparent: true`);
-          if (opCounter >= 1) {
-            clearInterval(flashInterval);
-          }
-        }, 50); 
-      }, 1500);
+        showStorySlide(1);
+      }, 3000);
 
-      // Desktop 2D story sequence triggers
-      setTimeout(() => { showStorySlide(1); }, 3000);
-      setTimeout(() => { showStorySlide(2); }, 7000);
-      setTimeout(() => { showStorySlide(3); }, 30000);
-      setTimeout(() => { showStorySlide(4); }, 38000);
-      setTimeout(() => { showStorySlide(5); }, 40000);
+      // Screen 2: Swaps after 6 seconds
+      setTimeout(() => {
+        showStorySlide(2);
+      }, 7000);
 
-      // Immersive 3D VR story sequence triggers
-      setTimeout(() => { showVRStorySlide(0); }, 3000);
-      setTimeout(() => { showVRStorySlide(1); }, 7000);
-      setTimeout(() => { showVRStorySlide(2); }, 30000);
-      setTimeout(() => { showVRStorySlide(3); }, 38000);
-      setTimeout(() => { showVRStorySlide(4); }, 40000);
+      // Screen 3: Swaps after 6 seconds
+      setTimeout(() => {
+        showStorySlide(3);
+      }, 30000);
+
+      // Screen 4: Swaps after 6 seconds
+      setTimeout(() => {
+        showStorySlide(4);
+      }, 38000);
+
+      // Screen 5: Swaps after 6 seconds
+      setTimeout(() => {
+        showStorySlide(5);
+      }, 40000);
     }
 
+    // Swaps active story page visibility classes cleanly and runs the letter animation
     function showStorySlide(slideNumber) {
       let activeSlide = document.querySelector('.story-slide.active-slide');
       if (activeSlide) {
@@ -618,10 +555,12 @@
       if (targetSlide) {
         targetSlide.classList.add('active-slide');
         
+        // Find text block container and target raw data string
         let txtElement = targetSlide.querySelector('.story-text');
         let rawPhrase = txtElement.getAttribute('data-text');
-        txtElement.innerHTML = ''; 
+        txtElement.innerHTML = ''; // Reset container cleanly
 
+        // Transform string characters into animated elements
         let characterArray = rawPhrase.split('');
         characterArray.forEach((char, idx) => {
           let charSpan = document.createElement('span');
@@ -631,19 +570,11 @@
           } else {
             charSpan.className = 'letter-span';
             charSpan.innerText = char;
+            // Increases delay linearly per character for a progressive letter wave fade-in
             charSpan.style.animationDelay = `${idx * 25}ms`;
           }
           txtElement.appendChild(charSpan);
         });
-      }
-    }
-
-    // Displays the text cards cleanly into 3D space when inside a VR Headset
-    function showVRStorySlide(index) {
-      let vrTextEl = document.getElementById('vr-win-story');
-      if (vrTextEl) {
-        vrTextEl.setAttribute('visible', 'true');
-        vrTextEl.setAttribute('value', vrSlidesTextData[index].toUpperCase());
       }
     }
 
@@ -654,8 +585,6 @@
 
     function updateHydrationBarDisplay(targetPercentage) {
       currentHydrationValue = Math.max(0, Math.min(100, targetPercentage));
-      
-      // Update standard 2D flat layout element
       let fluidElement = document.getElementById('hydration-bar-fluid');
       if (fluidElement) {
         fluidElement.style.width = `${currentHydrationValue}%`;
@@ -667,29 +596,10 @@
           fluidElement.style.backgroundColor = "#732536";
         }
       }
-
-      // Mirror directly to the 3D VR fluid element 
-      let vrFluid = document.getElementById('vr-hydration-fluid');
-      if (vrFluid) {
-        let calculatedWidth = (currentHydrationValue / 100) * 0.43;
-        vrFluid.setAttribute('width', calculatedWidth);
-        // Anchor fluid modification transformations to adjust from left to right
-        vrFluid.setAttribute('position', `${(calculatedWidth / 2) - 0.215} 0 0.001`);
-
-        if (currentHydrationValue > 50) {
-          vrFluid.setAttribute('color', "#2e3085");
-        } else if (currentHydrationValue <= 50 && currentHydrationValue > 35) {
-          vrFluid.setAttribute('color', "#45235c");
-        } else {
-          vrFluid.setAttribute('color', "#732536");
-        }
-      }
     }
 
     function updateHealthBarDisplay(targetPercentage) {
       currentHealthValue = Math.max(0, Math.min(100, targetPercentage));
-      
-      // Update standard 2D flat layout element
       let fluidElement = document.getElementById('health-bar-fluid');
       if (fluidElement) {
         fluidElement.style.width = `${currentHealthValue}%`;
@@ -699,23 +609,6 @@
           fluidElement.style.backgroundColor = "#785122";
         } else {
           fluidElement.style.backgroundColor = "#732536";
-        }
-      }
-
-      // Mirror directly to the 3D VR fluid element
-      let vrFluid = document.getElementById('vr-health-fluid');
-      if (vrFluid) {
-        let calculatedWidth = (currentHealthValue / 100) * 0.43;
-        vrFluid.setAttribute('width', calculatedWidth);
-        // Anchor fluid modification transformations to adjust from left to right
-        vrFluid.setAttribute('position', `${(calculatedWidth / 2) - 0.215} 0 0.001`);
-
-        if (currentHealthValue > 50) {
-          vrFluid.setAttribute('color', "#2E8562");
-        } else if (currentHealthValue <= 50 && currentHealthValue > 35) {
-          vrFluid.setAttribute('color', "#785122");
-        } else {
-          vrFluid.setAttribute('color', "#732536");
         }
       }
     }
