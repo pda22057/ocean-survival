@@ -103,17 +103,19 @@
       <a-entity id="camera" camera position="0 3.5 0">
         
         <a-entity id="vr-hud" position="0 0 -1" visible="false">
-          <a-text id="hud-clock" value="TIME: 05:00 AM" color="#64dfdf" width="1.5" align="center" position="0 0.4 0"></a-text>
           
-          <a-text value="HYDRATION" color="#ffffff" width="0.8" align="center" position="-0.4 0.3 0"></a-text>
-          <a-plane id="hud-hydration-bg" color="#2a2833" width="0.4" height="0.04" position="-0.4 0.25 0">
-            <a-plane id="hud-hydration-fluid" color="#2e3085" width="0.38" height="0.03" position="0 0 0.001"></a-plane>
+          <a-text id="hud-clock" value="TIME: 05:00 AM" color="#64dfdf" width="1.4" align="right" position="0.55 0.35 0"></a-text>
+          
+          <a-text value="HYDRATION" color="#ffffff" width="0.7" align="left" position="-0.75 0.37 0"></a-text>
+          <a-plane id="hud-hydration-bg" color="#2a2833" width="0.35" height="0.03" position="-0.575 0.32 0">
+            <a-plane id="hud-hydration-fluid" color="#2e3085" width="0.33" height="0.02" position="0 0 0.001"></a-plane>
           </a-plane>
 
-          <a-text value="HEALTH" color="#ffffff" width="0.8" align="center" position="0.4 0.3 0"></a-text>
-          <a-plane id="hud-health-bg" color="#2a2833" width="0.4" height="0.04" position="0.4 0.25 0">
-            <a-plane id="hud-health-fluid" color="#2E8562" width="0.38" height="0.03" position="0 0 0.001"></a-plane>
+          <a-text value="HEALTH" color="#ffffff" width="0.7" align="left" position="-0.75 0.27 0"></a-text>
+          <a-plane id="hud-health-bg" color="#2a2833" width="0.35" height="0.03" position="-0.575 0.22 0">
+            <a-plane id="hud-health-fluid" color="#2E8562" width="0.33" height="0.02" position="0 0 0.001"></a-plane>
           </a-plane>
+          
         </a-entity>
 
         <a-entity id="vr-game-over" position="0 0 -0.5" visible="false">
