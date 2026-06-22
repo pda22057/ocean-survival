@@ -288,15 +288,6 @@
   <a-scene id="scene" ring-spawner="playerRig: #rig; enabled: false; minSpawnRadius: 15; maxSpawnRadius: 40" bottle-spawner="playerRig: #rig; enabled: false">
     
     <a-assets>
-      <audio id="ambient-sea" 
-             src="assets/models/ocean_survival2.mp3" 
-             preload="auto" 
-             loop="true"></audio>
-      <audio id="helicopter-sound" 
-             src="assets/models/helicopter.mp3" 
-             preload="auto"
-             loop="false"></audio> 
-  
       <a-asset-item id="boat-model" src="assets/models/fishing_boat.glb"></a-asset-item>
       <a-asset-item id="bottle-model" src="assets/models/water_canteen_-_pbr_game_ready_asset.glb"></a-asset-item>
       <a-asset-item id="shark-model" src="assets/models/swimming_shark.glb"></a-asset-item>
@@ -317,7 +308,6 @@
               position="0 0 0" 
               wasd-controls="enabled: false; acceleration: 25"
               look-controls="enabled: false; pointerLockEnabled: true"
-              sound="src: #ambient-sea; autoplay: false; loop: true; volume: 0.8"
               boat-leveler>
 
       <a-entity id="camera"
@@ -358,11 +348,18 @@
                 height="50"
                 material="color: #29547d; roughness: 1; metalness: 0; side: double">
     </a-cylinder>
-    
-    <a-entity id="helicopter-audio-container" sound="src: #helicopter-sound; autoplay: false; loop: false; volume: 0.9"></a-entity>
   </a-scene>
 
   <script>
+    // 🎵 NATIVE JAVASCRIPT AUDIO ENGINE Setup
+    const ambientSeaSound = new Audio("assets/models/ocean_survival2.mp3");
+    ambientSeaSound.loop = true;
+    ambientSeaSound.volume = 0.8;
+
+    const helicopterRescueSound = new Audio("assets/models/helicopter.mp3");
+    helicopterRescueSound.loop = false;
+    helicopterRescueSound.volume = 0.9;
+
     let gameHours = 5;
     let gameMinutes = 0;
     let clockInterval = null;
@@ -374,14 +371,13 @@
     let healthSystemActive = false; 
 
     document.getElementById('audio-button').addEventListener('click', function() {
+      // 🔊 Instantly kick off the sea ambient track natively
+      ambientSeaSound.play().catch(err => console.log("Audio play error: ", err));
+
       var rig = document.getElementById('rig');
       if (rig) {
         rig.setAttribute('wasd-controls', 'enabled: true');
         rig.setAttribute('look-controls', 'enabled: true');
-        
-        if (rig.components && rig.components.sound) {
-          rig.components.sound.playSound(); 
-        }
       }
 
       var boat = document.getElementById('player-boat');
@@ -464,11 +460,11 @@
       clearInterval(clockInterval);
       healthSystemActive = false;
       
-      // 🔇 Stop Ocean Sound immediately on Game Over
+      // 🔇 Cut the ocean track right away
+      ambientSeaSound.pause();
+      ambientSeaSound.currentTime = 0;
+      
       let rig = document.getElementById('rig');
-      if (rig && rig.components && rig.components.sound) {
-        rig.components.sound.stopSound();
-      }
       if (rig) rig.setAttribute('wasd-controls', 'enabled: false');
       
       let scene = document.getElementById('scene');
@@ -481,4 +477,202 @@
       if (screenElement) screenElement.style.display = 'flex';
     }
 
-    // 🚁 WINNING ENDING (Helicopter rescue, screen turns white, story loops dynamically
+    // 🚁 WINNING ENDING (Helicopter rescue, screen turns white, story loops dynamically)
+    function triggerWin() {
+      clearInterval(hydrationDrainInterval);
+      clearInterval(clockInterval);
+      healthSystemActive = false;
+      
+      // 🔇 Kill the ocean track right away
+      ambientSeaSound.pause();
+      ambientSeaSound.currentTime = 0;
+
+      // 🔊 Fire up the Helicopter Rescue track smoothly
+      helicopterRescueSound.play().catch(err => console.log("Audio play error: ", err));
+      
+      let rig = document.getElementById('rig');
+      if (rig) rig.setAttribute('wasd-controls', 'enabled: false');
+      
+      let scene = document.getElementById('scene');
+      if (scene) {
+        scene.setAttribute('ring-spawner', 'enabled: false');
+        scene.setAttribute('bottle-spawner', 'enabled: false');
+        
+        // Wipe all remaining water bottles off the map
+        let existingBottles = scene.querySelectorAll('[gltf-model="#bottle-model"]');
+        existingBottles.forEach(bottle => {
+          if (bottle.parentNode) bottle.parentNode.removeChild(bottle);
+        });
+
+        // Wipe all dangerous rings and sharks off the map
+        let existingRings = scene.querySelectorAll('a-entity[wave-rider]');
+        existingRings.forEach(ring => {
+          if (ring.id !== 'rig') {
+            if (ring.parentNode) ring.parentNode.removeChild(ring);
+          }
+        });
+      }
+      
+      // Show screen overlay, triggering the delayed 2.5s white flash animation
+      let winElement = document.getElementById('win-screen');
+      if (winElement) winElement.style.display = 'flex';
+
+      // ⏱️ THE SEQUENTIAL 6-SECOND TIMEOUT CHAIN (Ensures clean slide swaps)
+      // 1.5s freeze + 2.5s fade = 6000ms until screen turns completely solid white
+      
+      // Screen 1: Shows up instantly when white out finishes
+      setTimeout(() => {
+        showStorySlide(1);
+      }, 6000);
+
+      // Screen 2: Swaps after 6 seconds
+      setTimeout(() => {
+        showStorySlide(2);
+      }, 12000);
+
+      // Screen 3: Swaps after 6 seconds
+      setTimeout(() => {
+        showStorySlide(3);
+      }, 18000);
+
+      // Screen 4: Swaps after 6 seconds
+      setTimeout(() => {
+        showStorySlide(4);
+      }, 24000);
+
+      // Screen 5: Swaps after 6 seconds
+      setTimeout(() => {
+        showStorySlide(5);
+      }, 30000);
+    }
+
+    // Swaps active story page visibility classes cleanly and runs the letter animation
+    function showStorySlide(slideNumber) {
+      let activeSlide = document.querySelector('.story-slide.active-slide');
+      if (activeSlide) {
+        activeSlide.classList.remove('active-slide');
+      }
+
+      let targetSlide = document.getElementById(`slide-${slideNumber}`);
+      if (targetSlide) {
+        targetSlide.classList.add('active-slide');
+        
+        // Find text block container and target raw data string
+        let txtElement = targetSlide.querySelector('.story-text');
+        let rawPhrase = txtElement.getAttribute('data-text');
+        txtElement.innerHTML = ''; // Reset container cleanly
+
+        // Transform string characters into animated elements
+        let characterArray = rawPhrase.split('');
+        characterArray.forEach((char, idx) => {
+          let charSpan = document.createElement('span');
+          if (char === ' ') {
+            charSpan.className = 'space-span';
+            charSpan.innerHTML = '&nbsp;';
+          } else {
+            charSpan.className = 'letter-span';
+            charSpan.innerText = char;
+            // Increases delay linearly per character for a progressive letter wave fade-in
+            charSpan.style.animationDelay = `${idx * 25}ms`;
+          }
+          txtElement.appendChild(charSpan);
+        });
+      }
+    }
+
+    function collectWaterBottle() {
+      let restoredHydrationTotal = Math.min(100, currentHydrationValue + 5);
+      updateHydrationBarDisplay(restoredHydrationTotal);
+    }
+
+    function updateHydrationBarDisplay(targetPercentage) {
+      currentHydrationValue = Math.max(0, Math.min(100, targetPercentage));
+      let fluidElement = document.getElementById('hydration-bar-fluid');
+      if (fluidElement) {
+        fluidElement.style.width = `${currentHydrationValue}%`;
+        if (currentHydrationValue > 50) {
+          fluidElement.style.backgroundColor = "#2e3085";
+        } else if (currentHydrationValue <= 50 && currentHydrationValue > 35) {
+          fluidElement.style.backgroundColor = "#45235c";
+        } else {
+          fluidElement.style.backgroundColor = "#732536";
+        }
+      }
+    }
+
+    function updateHealthBarDisplay(targetPercentage) {
+      currentHealthValue = Math.max(0, Math.min(100, targetPercentage));
+      let fluidElement = document.getElementById('health-bar-fluid');
+      if (fluidElement) {
+        fluidElement.style.width = `${currentHealthValue}%`;
+        if (currentHealthValue > 50) {
+          fluidElement.style.backgroundColor = "#2E8562";
+        } else if (currentHealthValue <= 50 && currentHealthValue > 35) {
+          fluidElement.style.backgroundColor = "#785122";
+        } else {
+          fluidElement.style.backgroundColor = "#732536";
+        }
+      }
+    }
+
+    AFRAME.registerComponent('boat-leveler', {
+      tick: function () {
+        let currentRotation = this.el.object3D.rotation;
+        this.el.object3D.rotation.set(0, currentRotation.y, 0);
+      }
+    });
+
+    // 🍾 BOTTLE SPAWNER COMPONENT
+    AFRAME.registerComponent('bottle-spawner', {
+      schema: {
+        playerRig: { type: 'selector' },
+        enabled: { default: false },
+        maxBottles: { default: 25 },         
+        spawnDelay: { default: 8000 },      
+        minRadius: { default: 20 },
+        maxRadius: { default: 350 }
+      },
+      init: function () {
+        this.activeBottles = [];
+        
+        this.el.addEventListener('start-spawning', () => {
+          for (let i = 0; i < this.data.maxBottles; i++) {
+            this.spawnBottle();
+          }
+        });
+      },
+      tick: function () {
+        if (!this.data.enabled || !this.data.playerRig) return;
+
+        let playerPos = this.data.playerRig.object3D.position;
+        for (let i = this.activeBottles.length - 1; i >= 0; i--) {
+          let bottleEl = this.activeBottles[i];
+          let bottlePos = bottleEl.object3D.position;
+          
+          let dx = playerPos.x - bottlePos.x;
+          let dz = playerPos.z - bottlePos.z;
+          let distance = Math.sqrt(dx * dx + dz * dz);
+
+          if (distance < 3.5) { 
+            collectWaterBottle(); 
+            this.removeBottle(bottleEl, false); 
+          }
+        }
+      },
+      spawnBottle: function () {
+        let playerPos = this.data.playerRig.object3D.position;
+        
+        let angle = Math.random() * Math.PI * 2;
+        let distance = Math.random() * (this.data.maxRadius - this.data.minRadius) + this.data.minRadius;
+        
+        let spawnX = playerPos.x + Math.cos(angle) * distance;
+        let spawnZ = playerPos.z + Math.sin(angle) * distance;
+
+        let bottle = document.createElement('a-entity');
+        bottle.setAttribute('gltf-model', '#bottle-model');
+        bottle.setAttribute('position', `${spawnX} 0.3 ${spawnZ}`); 
+        bottle.setAttribute('scale', '4 4 4'); 
+        
+        bottle.setAttribute('wave-rider', {
+          amplitude: 0.05,
+          speed: 1.
