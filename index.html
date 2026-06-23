@@ -332,6 +332,20 @@
           </a-text>
         </a-entity>
 
+        <a-entity id="vr-win-group" position="0 0 -0.8" visible="false">
+          <a-plane width="3" height="3" color="#ffffff" material="shader: flat; opacity: 1"></a-plane>
+          <a-text id="vr-story-text"
+                  value=""
+                  align="center"
+                  width="0.8"
+                  font="courier"
+                  negate="false"
+                  color="#1a2a3a"
+                  position="0 0 0.01"
+                  wrap-count="25">
+          </a-text>
+        </a-entity>
+
       </a-entity>
       
       <a-entity id="player-boat"
@@ -513,6 +527,10 @@
       let vrHUD = document.getElementById('vr-hud-group');
       if (vrHUD) vrHUD.setAttribute('visible', 'false');
 
+      // Reveal the VR narrative screen layer matching the desktop layout look
+      let vrWinGroup = document.getElementById('vr-win-group');
+      if (vrWinGroup) vrWinGroup.setAttribute('visible', 'true');
+
       let scene = document.getElementById('scene');
       if (scene) {
         scene.setAttribute('ring-spawner', 'enabled: false');
@@ -551,6 +569,7 @@
     }
 
     function showStorySlide(slideNumber) {
+      // 1. Desktop HTML slide handling
       let activeSlide = document.querySelector('.story-slide.active-slide');
       if (activeSlide) {
         activeSlide.classList.remove('active-slide');
@@ -559,6 +578,15 @@
       let targetSlide = document.getElementById(`slide-${slideNumber}`);
       if (targetSlide) {
         targetSlide.classList.add('active-slide');
+        
+        // Extract raw string content from active paragraph element 
+        let textContent = targetSlide.querySelector('.story-text').innerText;
+        
+        // 2. Feed extracted slide values live into the 3D VR text system
+        let vrTextComponent = document.getElementById('vr-story-text');
+        if (vrTextComponent) {
+          vrTextComponent.setAttribute('value', textContent);
+        }
       }
     }
 
