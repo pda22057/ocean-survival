@@ -295,6 +295,7 @@
               boat-leveler>
 
       <a-entity id="camera" camera position="0 3.5 0">
+        
         <a-entity id="vr-hud-group" position="0 0 -1" visible="false">
           
           <a-text id="hud-clock-text"
@@ -318,6 +319,19 @@
           </a-entity>
 
         </a-entity>
+
+        <a-entity id="vr-game-over-group" position="0 0 -0.8" visible="false">
+          <a-plane width="3" height="3" color="#000000" material="shader: flat; opacity: 1"></a-plane>
+          <a-text value="GAME OVER"
+                  align="center"
+                  width="2.5"
+                  font="dejavu"
+                  negate="false"
+                  color="#ffffff"
+                  position="0 0 0.01">
+          </a-text>
+        </a-entity>
+
       </a-entity>
       
       <a-entity id="player-boat"
@@ -462,15 +476,19 @@
       }, 10000);
     }
 
-    // 💀 LOSING ENDING (Pitch black screen)
+    // 💀 LOSING ENDING (Pitch black screen + VR support)
     function triggerLoss() {
       clearInterval(hydrationDrainInterval);
       clearInterval(clockInterval);
       healthSystemActive = false;
       
-      // Hide the complete VR layout element to clear views
+      // Hide the complete VR layout element to clear regular status views
       let vrHUD = document.getElementById('vr-hud-group');
       if (vrHUD) vrHUD.setAttribute('visible', 'false');
+
+      // Trigger the 3D Blackout/Game over screen directly attached to the VR Camera lens
+      let vrGameOver = document.getElementById('vr-game-over-group');
+      if (vrGameOver) vrGameOver.setAttribute('visible', 'true');
 
       let scene = document.getElementById('scene');
       if (scene) {
