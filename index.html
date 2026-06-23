@@ -304,14 +304,14 @@
            visible="false">
            
     <a-text id="hud-clock-text"
-            value="TIME: 05:00 AM"
-            position="0 0 0.01"
-            align="center"
-            width="1.2"
-            font="dejavu"
-            negate="false"
-            color="#64dfdf">
-    </a-text>
+        value="TIME: 05:00 AM"
+        position="0 0 0.01"
+        align="center"
+        width="1.2"
+        font="dejavu"
+        negate="false"
+        color="#64dfdf">
+</a-text>
   </a-plane>
 
 </a-entity>
@@ -409,27 +409,33 @@ if (hud) hud.setAttribute('visible', 'true');
     });
 
     function startSurvivalClock() {
-  clockInterval = setInterval(() => {
-    gameMinutes += 15;
-    if (gameMinutes >= 60) {
-      gameMinutes = 0;
-      gameHours += 1;
-    }
-    let displayHours = gameHours.toString().padStart(2, '0');
-    let displayMinutes = gameMinutes.toString().padStart(2, '0');
-    
-    // Exact structural clone of your previous string template, pushed to 3D primitive attribute strings
-    let hudElement = document.getElementById('hud-clock-text');
-    if (hudElement) {
-      hudElement.setAttribute('value', `TIME: ${displayHours}:${displayMinutes} AM`);
-    }
+      clockInterval = setInterval(() => {
+        gameMinutes += 15;
+        if (gameMinutes >= 60) {
+          gameMinutes = 0;
+          gameHours += 1;
+        }
+        let displayHours = gameHours.toString().padStart(2, '0');
+        let displayMinutes = gameMinutes.toString().padStart(2, '0');
+        
+        // 1. UPDATE THE 3D VR TEXT COMPONENT
+        let vrClock = document.getElementById('hud-clock-text');
+        if (vrClock) {
+          vrClock.setAttribute('value', `TIME: ${displayHours}:${displayMinutes} AM`);
+        }
 
-    // Win condition check matching your game mechanics
-    if (gameHours === 7 && gameMinutes === 0) {
-      triggerWin();
+        // 2. UPDATE THE STANDARD 2D TEXT OVERLAY (Just in case)
+        let flatClock = document.getElementById('survival-hud');
+        if (flatClock) {
+          flatClock.innerText = `TIME: ${displayHours}:${displayMinutes} AM`;
+        }
+
+        // 🏆 WIN CONDITION REACHED AT 7:00 AM
+        if (gameHours === 7 && gameMinutes === 0) {
+          triggerWin();
+        }
+      }, 30000); 
     }
-  }, 30000); 
-}
 
     function startSurvivalDrainSystems() {
       hydrationDrainInterval = setInterval(() => {
