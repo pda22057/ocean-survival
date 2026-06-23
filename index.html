@@ -292,24 +292,29 @@
               sound="src: #ambient-sea; autoplay: false; loop: true; volume: 0.8"
               boat-leveler>
 
-      <a-entity id="camera" camera position="0 3.5 0">
-        <a-plane id="hud-clock-bg"
-                 position="0.55 0.35 -1" 
-                 width="0.45" 
-                 height="0.12" 
-                 material="color: #000a14; opacity: 0.35; transparent: true; shader: flat"
-                 visible="false">
-                 
-          <a-text id="hud-clock-text"
-                  value="TIME: 05:00 AM"
-                  position="0 0 0.01"
-                  align="center"
-                  width="1.3"
-                  font="monospace"
-                  color="#64dfdf">
-          </a-text>
-        </a-plane>
-      </a-entity>
+      <a-entity id="camera"
+          camera
+          position="0 3.5 0">
+          
+  <a-plane id="hud-clock-bg"
+           position="0.6 0.4 -1" 
+           width="0.4" 
+           height="0.1" 
+           material="color: #000a14; opacity: 0.35; transparent: true; shader: flat"
+           visible="false">
+           
+    <a-text id="hud-clock-text"
+            value="TIME: 05:00 AM"
+            position="0 0 0.01"
+            align="center"
+            width="1.2"
+            font="monospace"
+            negate="false"
+            color="#64dfdf">
+    </a-text>
+  </a-plane>
+
+</a-entity>
       
       <a-entity id="player-boat"
                 gltf-model="#boat-model"
