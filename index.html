@@ -129,7 +129,7 @@
       transition: width 0.3s ease, background-color 0.5s ease;
     }
 
-    /* 🖤 FULL BLACK GAME OVER SCREEN FOR LOSING (Kept for external presenter screens) */
+    /* 🖤 FULL BLACK GAME OVER SCREEN FOR LOSING */
     #game-over-screen {
       position: fixed;
       top: 0;
@@ -170,7 +170,7 @@
       opacity: 0;
     }
 
-    /* 🎬 WHITE FADE ANIMATION */
+    /* 🎬 WHITE FADE ANIMATION (Takes 2.5s, starts after 1.5s freeze) */
     #win-screen[style*="display: flex"] {
       animation: spotlightFadeIn 2.5s ease-in 1.5s forwards; 
     }
@@ -190,11 +190,13 @@
       text-align: center;
     }
 
+    /* Displays the active slide and triggers text fade animation */
     .story-slide.active-slide {
       display: flex !important;
       animation: textFadeIn 1.0s ease-out forwards;
     }
 
+    /* ✍️ TYPING STYLE FONT FOR STORY TEXT */
     .story-text {
       font-family: 'Courier New', Courier, monospace;
       font-size: 24px;
@@ -204,6 +206,7 @@
       max-width: 750px;
     }
 
+    /* 📽️ ANIMATION KEYFRAMES */
     @keyframes spotlightFadeIn {
       from { opacity: 0; }
       to { opacity: 1; }
@@ -291,21 +294,30 @@
               sound="src: #ambient-sea; autoplay: false; loop: true; volume: 0.8"
               boat-leveler>
 
-      <a-entity id="camera"
-                camera
-                position="0 3.5 0">
-                
-        <a-entity id="vr-game-over" position="0 0 -1" visible="false">
-          <a-plane color="#000000" width="4" height="4" material="shader: flat; depthTest: false"></a-plane>
-          <a-text value="GAME OVER" 
-                  color="#ffffff" 
-                  align="center" 
-                  width="3.5" 
-                  font="mozillavr"
-                  position="0 0 0.01"
-                  material="shader: flat; depthTest: false"></a-text>
+      <a-entity id="camera" camera position="0 3.5 0">
+        <a-entity id="vr-hud-group" position="0 0 -1" visible="false">
+          
+          <a-text id="hud-clock-text"
+                  value="TIME: 05:00 AM"
+                  position="0 0.25 0"
+                  align="center"
+                  width="1.2"
+                  font="dejavu"
+                  negate="false"
+                  color="#64dfdf">
+          </a-text>
+
+          <a-entity id="vr-hydration-container" position="0 0.15 0">
+            <a-plane width="0.5" height="0.03" color="#2a2833" material="shader: flat; roughness: 1; metalness: 0"></a-plane>
+            <a-plane id="vr-hydration-fluid" width="0.48" height="0.02" color="#2e3085" position="0 0 0.001" material="shader: flat" pivot="-0.24 0 0"></a-plane>
+          </a-entity>
+
+          <a-entity id="vr-health-container" position="0 0.09 0">
+            <a-plane width="0.5" height="0.03" color="#2a2833" material="shader: flat; roughness: 1; metalness: 0"></a-plane>
+            <a-plane id="vr-health-fluid" width="0.48" height="0.02" color="#2E8562" position="0 0 0.001" material="shader: flat" pivot="-0.24 0 0"></a-plane>
+          </a-entity>
+
         </a-entity>
-        
       </a-entity>
       
       <a-entity id="player-boat"
@@ -387,6 +399,10 @@
       var healthHUD = document.getElementById('health-bar-container');
       if (healthHUD) healthHUD.style.display = 'block';
       
+      // Reveal the VR Overlay layout inside the headset camera rig
+      var vrHUD = document.getElementById('vr-hud-group');
+      if (vrHUD) vrHUD.setAttribute('visible', 'true');
+      
       startSurvivalClock();
       startSurvivalDrainSystems();
       healthSystemActive = true;
@@ -409,9 +425,16 @@
         }
         let displayHours = gameHours.toString().padStart(2, '0');
         let displayMinutes = gameMinutes.toString().padStart(2, '0');
+        
+        // 1. Update standard desktop HUD
         let hudElement = document.getElementById('survival-hud');
         if (hudElement) hudElement.innerText = `TIME: ${displayHours}:${displayMinutes} AM`;
 
+        // 2. Update 3D VR text component space
+        let vrClock = document.getElementById('hud-clock-text');
+        if (vrClock) vrClock.setAttribute('value', `TIME: ${displayHours}:${displayMinutes} AM`);
+
+        // 🏆 WIN CONDITION REACHED AT 7:00 AM
         if (gameHours === 7 && gameMinutes === 0) {
           triggerWin();
         }
@@ -439,36 +462,39 @@
       }, 10000);
     }
 
-    // 💀 LOSING ENDING (Pitch black screen across VR & standard displays)
+    // 💀 LOSING ENDING (Pitch black screen)
     function triggerLoss() {
       clearInterval(hydrationDrainInterval);
       clearInterval(clockInterval);
       healthSystemActive = false;
       
+      // Hide the complete VR layout element to clear views
+      let vrHUD = document.getElementById('vr-hud-group');
+      if (vrHUD) vrHUD.setAttribute('visible', 'false');
+
       let scene = document.getElementById('scene');
       if (scene) {
         scene.setAttribute('ring-spawner', 'enabled: false');
         scene.setAttribute('bottle-spawner', 'enabled: false');
       }
       
-      // 1. Trigger the desktop mirror monitor backup screen
       let screenElement = document.getElementById('game-over-screen');
       if (screenElement) screenElement.style.display = 'flex';
-      
-      // 2. Trigger the VR 3D Space Screen inside the headset camera
-      let vrGameOverScreen = document.getElementById('vr-game-over');
-      if (vrGameOverScreen) vrGameOverScreen.setAttribute('visible', 'true');
       
       let rig = document.getElementById('rig');
       if (rig) rig.setAttribute('wasd-controls', 'enabled: false');
     }
 
-    // 🚁 WINNING ENDING
+    // 🚁 WINNING ENDING (Helicopter rescue, screen turns white, story loops dynamically)
     function triggerWin() {
       clearInterval(hydrationDrainInterval);
       clearInterval(clockInterval);
       healthSystemActive = false;
       
+      // Hide the complete VR layout element to clear views
+      let vrHUD = document.getElementById('vr-hud-group');
+      if (vrHUD) vrHUD.setAttribute('visible', 'false');
+
       let scene = document.getElementById('scene');
       if (scene) {
         scene.setAttribute('ring-spawner', 'enabled: false');
@@ -525,31 +551,59 @@
 
     function updateHydrationBarDisplay(targetPercentage) {
       currentHydrationValue = Math.max(0, Math.min(100, targetPercentage));
+      
+      // 1. Handle regular Desktop Screen DOM update
       let fluidElement = document.getElementById('hydration-bar-fluid');
+      let hexColor = "#2e3085";
+      
+      if (currentHydrationValue > 50) {
+        hexColor = "#2e3085";
+      } else if (currentHydrationValue <= 50 && currentHydrationValue > 35) {
+        hexColor = "#45235c";
+      } else {
+        hexColor = "#732536";
+      }
+
       if (fluidElement) {
         fluidElement.style.width = `${currentHydrationValue}%`;
-        if (currentHydrationValue > 50) {
-          fluidElement.style.backgroundColor = "#2e3085";
-        } else if (currentHydrationValue <= 50 && currentHydrationValue > 35) {
-          fluidElement.style.backgroundColor = "#45235c";
-        } else {
-          fluidElement.style.backgroundColor = "#732536";
-        }
+        fluidElement.style.backgroundColor = hexColor;
+      }
+
+      // 2. Handle VR Space 3D Component Object update
+      let vrFluid = document.getElementById('vr-hydration-fluid');
+      if (vrFluid) {
+        let internalWidthScale = currentHydrationValue / 100;
+        vrFluid.setAttribute('scale', `${internalWidthScale} 1 1`);
+        vrFluid.setAttribute('color', hexColor);
       }
     }
 
     function updateHealthBarDisplay(targetPercentage) {
       currentHealthValue = Math.max(0, Math.min(100, targetPercentage));
+      
+      // 1. Handle regular Desktop Screen DOM update
       let fluidElement = document.getElementById('health-bar-fluid');
+      let hexColor = "#2E8562";
+      
+      if (currentHealthValue > 50) {
+        hexColor = "#2E8562";
+      } else if (currentHealthValue <= 50 && currentHealthValue > 35) {
+        hexColor = "#785122";
+      } else {
+        hexColor = "#732536";
+      }
+
       if (fluidElement) {
         fluidElement.style.width = `${currentHealthValue}%`;
-        if (currentHealthValue > 50) {
-          fluidElement.style.backgroundColor = "#2E8562";
-        } else if (currentHealthValue <= 50 && currentHealthValue > 35) {
-          fluidElement.style.backgroundColor = "#785122";
-        } else {
-          fluidElement.style.backgroundColor = "#732536";
-        }
+        fluidElement.style.backgroundColor = hexColor;
+      }
+
+      // 2. Handle VR Space 3D Component Object update
+      let vrFluid = document.getElementById('vr-health-fluid');
+      if (vrFluid) {
+        let internalWidthScale = currentHealthValue / 100;
+        vrFluid.setAttribute('scale', `${internalWidthScale} 1 1`);
+        vrFluid.setAttribute('color', hexColor);
       }
     }
 
@@ -560,6 +614,7 @@
       }
     });
 
+    // 🍾 BOTTLE SPAWNER COMPONENT
     AFRAME.registerComponent('bottle-spawner', {
       schema: {
         playerRig: { type: 'selector' },
