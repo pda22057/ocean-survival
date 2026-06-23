@@ -296,33 +296,6 @@
 
       <a-entity id="camera" camera position="0 3.5 0">
         
-        <a-entity cursor="fuse: false; rayOrigin: mouse" raycaster="objects: .vr-clickable"></a-entity>
-
-        <a-entity id="vr-menu-group" position="0 0 -1" visible="true">
-          <a-plane width="3" height="3" color="#01162b" material="shader: flat; opacity: 0.75"></a-plane>
-          
-          <a-text value="LOST AT SEA"
-                  align="center"
-                  width="3"
-                  font="dejavu"
-                  negate="false"
-                  color="#ffffff"
-                  position="0 0.4 0.01">
-          </a-text>
-
-          <a-entity id="vr-start-btn" class="vr-clickable" position="0 -0.2 0.02">
-            <a-plane width="0.8" height="0.25" color="#346fa8" material="shader: flat" id="vr-btn-mesh"></a-plane>
-            <a-text value="SURVIVE..."
-                    align="center"
-                    width="2"
-                    font="dejavu"
-                    negate="false"
-                    color="#ffffff"
-                    position="0 0 0.01">
-            </a-text>
-          </a-entity>
-        </a-entity>
-
         <a-entity id="vr-hud-group" position="0 0 -1" visible="false">
           
           <a-text id="hud-clock-text"
@@ -408,11 +381,7 @@
     let currentHealthValue = 100;
     let healthSystemActive = false; 
 
-    // Unified Initialization function used across desktop click or VR selection paths
-    function startGame() {
-      // Avoid restarting if game systems are already active
-      if (healthSystemActive) return;
-
+    document.getElementById('audio-button').addEventListener('click', function() {
       var rig = document.getElementById('rig');
       if (rig) {
         rig.setAttribute('wasd-controls', 'enabled: true');
@@ -444,10 +413,7 @@
       var healthHUD = document.getElementById('health-bar-container');
       if (healthHUD) healthHUD.style.display = 'block';
       
-      // Toggle visibility states inside VR headset layout
-      var vrMenu = document.getElementById('vr-menu-group');
-      if (vrMenu) vrMenu.setAttribute('visible', 'false');
-
+      // Reveal the VR Overlay layout inside the headset camera rig
       var vrHUD = document.getElementById('vr-hud-group');
       if (vrHUD) vrHUD.setAttribute('visible', 'true');
       
@@ -462,20 +428,6 @@
           menu.style.display = 'none';
         }, 500); 
       }
-    }
-
-    // Bind standard desktop interactions
-    document.getElementById('audio-button').addEventListener('click', startGame);
-
-    // Bind 3D Spatial VR Element Click interactions
-    document.getElementById('vr-start-btn').addEventListener('click', startGame);
-
-    // Minor visual feedback helper for VR raycasting hovers
-    document.getElementById('vr-start-btn').addEventListener('mouseenter', function() {
-      document.getElementById('vr-btn-mesh').setAttribute('color', '#29547d');
-    });
-    document.getElementById('vr-start-btn').addEventListener('mouseleave', function() {
-      document.getElementById('vr-btn-mesh').setAttribute('color', '#346fa8');
     });
 
     function startSurvivalClock() {
