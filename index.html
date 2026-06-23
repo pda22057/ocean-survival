@@ -298,8 +298,8 @@
           
   <a-plane id="hud-clock-bg"
            position="0.6 0.4 -1" 
-           width="0.4" 
-           height="0.1" 
+           width="0.45" 
+           height="0.12" 
            material="color: #000a14; opacity: 0.35; transparent: true; shader: flat"
            visible="false">
            
@@ -308,7 +308,7 @@
             position="0 0 0.01"
             align="center"
             width="1.2"
-            font="monospace"
+            font="dejavu"
             negate="false"
             color="#64dfdf">
     </a-text>
@@ -385,9 +385,9 @@
         scene.setAttribute('bottle-spawner', 'enabled: true');
         scene.emit('start-spawning');
       }
-
-      var hud = document.getElementById('hud-clock-bg');
-      if (hud) hud.setAttribute('visible', 'true');
+      
+var hud = document.getElementById('hud-clock-bg');
+if (hud) hud.setAttribute('visible', 'true');
       
       var hydrationHUD = document.getElementById('hydration-bar-container');
       if (hydrationHUD) hydrationHUD.style.display = 'block';
@@ -409,26 +409,27 @@
     });
 
     function startSurvivalClock() {
-      clockInterval = setInterval(() => {
-        gameMinutes += 15;
-        if (gameMinutes >= 60) {
-          gameMinutes = 0;
-          gameHours += 1;
-        }
-        let displayHours = gameHours.toString().padStart(2, '0');
-        let displayMinutes = gameMinutes.toString().padStart(2, '0');
-        
-        // TARGET THE 3D TEXT VALUE INSTEAD OF 2D INNERTEXT
-        let hudElement = document.getElementById('hud-clock-text');
-        if (hudElement) {
-          hudElement.setAttribute('value', `TIME: ${displayHours}:${displayMinutes} AM`);
-        }
-
-        if (gameHours === 7 && gameMinutes === 0) {
-          triggerWin();
-        }
-      }, 30000); 
+  clockInterval = setInterval(() => {
+    gameMinutes += 15;
+    if (gameMinutes >= 60) {
+      gameMinutes = 0;
+      gameHours += 1;
     }
+    let displayHours = gameHours.toString().padStart(2, '0');
+    let displayMinutes = gameMinutes.toString().padStart(2, '0');
+    
+    // Exact structural clone of your previous string template, pushed to 3D primitive attribute strings
+    let hudElement = document.getElementById('hud-clock-text');
+    if (hudElement) {
+      hudElement.setAttribute('value', `TIME: ${displayHours}:${displayMinutes} AM`);
+    }
+
+    // Win condition check matching your game mechanics
+    if (gameHours === 7 && gameMinutes === 0) {
+      triggerWin();
+    }
+  }, 30000); 
+}
 
     function startSurvivalDrainSystems() {
       hydrationDrainInterval = setInterval(() => {
@@ -453,6 +454,9 @@
 
     // 💀 LOSING ENDING (Pitch black screen)
     function triggerLoss() {
+      // Add this inside both triggerWin() and triggerLoss() functions to drop the HUD component cleanly
+let clearClockHUD = document.getElementById('hud-clock-bg');
+if (clearClockHUD) clearClockHUD.setAttribute('visible', 'false');
       clearInterval(hydrationDrainInterval);
       clearInterval(clockInterval);
       healthSystemActive = false;
@@ -472,6 +476,9 @@
 
     // 🚁 WINNING ENDING (Helicopter rescue, screen turns white, story loops dynamically)
     function triggerWin() {
+      // Add this inside both triggerWin() and triggerLoss() functions to drop the HUD component cleanly
+let clearClockHUD = document.getElementById('hud-clock-bg');
+if (clearClockHUD) clearClockHUD.setAttribute('visible', 'false');
       clearInterval(hydrationDrainInterval);
       clearInterval(clockInterval);
       healthSystemActive = false;
