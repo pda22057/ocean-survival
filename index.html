@@ -257,7 +257,7 @@
     </div>
 
     <div class="story-slide" id="slide-5">
-      <p class="story-text">a tale that may one day be passed on to future generations.</p>
+      <p class="story-text">A tale that may one day be passed on to future generations.</p>
     </div>
   </div>
 
@@ -333,16 +333,16 @@
         </a-entity>
 
         <a-entity id="vr-win-group" position="0 0 -0.8" visible="false">
-          <a-plane width="3" height="3" color="#ffffff" material="shader: flat; opacity: 1"></a-plane>
+          <a-plane width="4" height="4" color="#ffffff" material="shader: flat; opacity: 1" position="0 0 0"></a-plane>
           <a-text id="vr-story-text"
                   value=""
                   align="center"
-                  width="0.8"
+                  width="1.8"
                   font="courier"
                   negate="false"
                   color="#1a2a3a"
-                  position="0 0 0.01"
-                  wrap-count="25">
+                  position="0 0 0.05"
+                  wrap-count="35">
           </a-text>
         </a-entity>
 
@@ -523,11 +523,11 @@
       clearInterval(clockInterval);
       healthSystemActive = false;
       
-      // Hide the complete VR layout element to clear views
+      // Hide the complete VR status layout views
       let vrHUD = document.getElementById('vr-hud-group');
       if (vrHUD) vrHUD.setAttribute('visible', 'false');
 
-      // Reveal the VR narrative screen layer matching the desktop layout look
+      // Reveal the VR narrative screen layout layer matching desktop look
       let vrWinGroup = document.getElementById('vr-win-group');
       if (vrWinGroup) vrWinGroup.setAttribute('visible', 'true');
 
@@ -561,11 +561,12 @@
       let winElement = document.getElementById('win-screen');
       if (winElement) winElement.style.display = 'flex';
 
-      setTimeout(() => { showStorySlide(1); }, 2000);
-      setTimeout(() => { showStorySlide(2); }, 5000);
-      setTimeout(() => { showStorySlide(3); }, 25000);
-      setTimeout(() => { showStorySlide(4); }, 35000);
-      setTimeout(() => { showStorySlide(5); }, 37000);
+      // ⏱️ TIMINGS RESTRENGTHENED TO ALIGN WITH CINEMATIC WHITE-SCREEN FADE TIME (4 seconds total fade)
+      setTimeout(() => { showStorySlide(1); }, 4000);  // Slide 1 appears right when white fade ends
+      setTimeout(() => { showStorySlide(2); }, 9000);  // 5 seconds later
+      setTimeout(() => { showStorySlide(3); }, 14000); // 5 seconds later
+      setTimeout(() => { showStorySlide(4); }, 22000); // 8 seconds later (longer text)
+      setTimeout(() => { showStorySlide(5); }, 30000); // 8 seconds later
     }
 
     function showStorySlide(slideNumber) {
@@ -579,10 +580,10 @@
       if (targetSlide) {
         targetSlide.classList.add('active-slide');
         
-        // Extract raw string content from active paragraph element 
+        // Extract raw string text content from your actual active paragraph div container
         let textContent = targetSlide.querySelector('.story-text').innerText;
         
-        // 2. Feed extracted slide values live into the 3D VR text system
+        // 2. Feed extracted text string into the 3D VR text component space
         let vrTextComponent = document.getElementById('vr-story-text');
         if (vrTextComponent) {
           vrTextComponent.setAttribute('value', textContent);
